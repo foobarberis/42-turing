@@ -1,0 +1,9 @@
+_build/
+_opam/
+ft_turing
+ft_turing.byte
+*.cmi
+*.cmo
+*.cmx
+*.o
+test/log.txt
