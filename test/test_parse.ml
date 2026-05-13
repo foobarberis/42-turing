@@ -38,6 +38,7 @@ let transitions_for state machine =
   | None -> failwith ("missing state transitions: " ^ state)
 
 let () =
+  Printf.printf "== Parse tests ==\n\n%!";
   run "parse_action LEFT" (fun () ->
     expect_equal Left (parse_action (`String "LEFT")) "expected Left");
 
@@ -141,27 +142,27 @@ let () =
     expect_parse_error (fun () ->
       load_machine "test/fixtures/parse/bad_transitions_type.json"));
 
-  run "load_machine parses unary_sub" (fun () ->
-    let machine = load_machine "res/unary_sub.json" in
-    let scanright = transitions_for "scanright" machine in
-    expect_equal "unary_sub" machine.name "unexpected machine name";
-    expect_equal ['1'; '.'; '-'; '='] machine.alphabet "unexpected alphabet";
+  run "load_machine parses unary_add" (fun () ->
+    let machine = load_machine "res/unary_add.json" in
+    let state_a = transitions_for "A" machine in
+    expect_equal "unary_add" machine.name "unexpected machine name";
+    expect_equal ['1'; '.'; '+'; '='] machine.alphabet "unexpected alphabet";
     expect_equal '.' machine.blank "unexpected blank symbol";
-    expect_equal ["scanright"; "eraseone"; "subone"; "skip"; "HALT"]
+    expect_equal ["A"; "B"; "C"; "D"; "E"]
       machine.states
       "unexpected states";
-    expect_equal "scanright" machine.initial "unexpected initial state";
-    expect_equal ["HALT"] machine.finals "unexpected final states";
-    expect_equal 4 (List.length scanright) "unexpected scanright transition count";
+    expect_equal "A" machine.initial "unexpected initial state";
+    expect_equal ["E"] machine.finals "unexpected final states";
+    expect_equal 4 (List.length state_a) "unexpected A transition count";
     expect_equal
       {
         read = '=';
-        to_state = "eraseone";
+        to_state = "B";
         write = '.';
         action = Left;
       }
-      (List.nth scanright 3)
-      "unexpected scanright transition");
+      (List.nth state_a 3)
+      "unexpected A transition");
 
   if !failed = 0 then
     Printf.printf "OK: %d tests\n" !total
