@@ -38,6 +38,7 @@ let transitions_for state machine =
   | None -> failwith ("missing state transitions: " ^ state)
 
 let () =
+  Printf.printf "== Parse tests ==\n\n%!";
   run "parse_action LEFT" (fun () ->
     expect_equal Left (parse_action (`String "LEFT")) "expected Left");
 
