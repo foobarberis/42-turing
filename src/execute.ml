@@ -11,7 +11,7 @@ let write  _symbol _tape =
 let move_left _tape =
 	let new_tape = match _tape with
 	| { left = []; current; right } ->
-		{ left = []; current =  '0'(*TODO change to blank symbol*); right = current :: right }
+		{ left = []; current =  '_'(*TODO change to blank symbol*); right = current :: right }
 	| { left = x :: xs; current; right } ->
 		{ left = xs; current = x; right = current :: right } in
 		new_tape
@@ -19,7 +19,7 @@ let move_left _tape =
 let move_right _tape = 
 	let new_tape = match _tape with
 	| { left; current; right = [] } ->
-		{ left = current :: left; current =  '0' (*TODO change to blank symbol*); right = [] }
+		{ left = current :: left; current =  '_' (*TODO change to blank symbol*); right = [] }
 	| { left; current; right = x :: xs } ->
 		{ left = current :: left; current = x; right = xs } in
 		new_tape
@@ -53,10 +53,12 @@ let execute_transition _transition _tape =
 let string_of_char lst =
 	String.concat "" (List.map (String.make 1) lst)
 
-let string_of_transition _transition = 
+let string_of_transition _state _transition = 
 	"(" 
+	^ _state
+	^ ", "
 	^ String.make 1 _transition.read 
-	^ " -> " 
+	^ ") -> (" 
 	^ _transition.to_state 
 	^ ", " 
 	^ String.make 1 _transition.write ^ ", " 
@@ -72,7 +74,7 @@ let tape_to_string _tape =
 	^ "]"
 
 let print_step _state _tape _transition =
-	Printf.printf "%s %s\n"(string_of_transition _transition) (tape_to_string _tape)
+	Printf.printf "%s %s\n"(tape_to_string _tape) (string_of_transition _state _transition) 
 
 (* ========== SINGLE EXECUTION STEP ==========
    Performs one complete step of machine execution:
