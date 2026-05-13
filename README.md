@@ -44,8 +44,8 @@ Run the program:
 - `src/execute.ml` — machine execution
 - `src/ft_turing.ml` — CLI entry point
 - `res/` — example machine descriptions
-- `test/test_parse.ml` — lightweight parser unit tests
-- `test/test_validate.ml` — lightweight validation unit tests
+- `test/test_parse.ml` — parser unit tests
+- `test/test_validate.ml` — validation unit tests
 - `test/fixtures/parse/` — broken JSON fixtures used by parser tests
 - `test/run_all.sh` — integration-style run script
 
@@ -99,7 +99,7 @@ The parser converts raw JSON into these types. After that, the rest of the progr
 
 This is not yet a `machine`. It is only the raw parsed JSON tree.
 
-### 3. Small helper functions narrow the JSON shape
+### 3. Small helper functions narrow the JSON structure
 
 `src/parse.ml` defines four small helpers:
 
@@ -108,7 +108,7 @@ This is not yet a `machine`. It is only the raw parsed JSON tree.
 - `as_list json` — expects a JSON array and returns an OCaml list of JSON values
 - `as_char json` — expects a JSON string of length 1 and returns an OCaml `char`
 
-These helpers do only one job each. If the JSON shape is wrong, they raise `Parse_error`.
+These helpers do only one job each. If the JSON structure is wrong, they raise `Parse_error`.
 
 This keeps the rest of the parser simple: the higher-level functions can say what they want to extract instead of re-checking the JSON type every time.
 
@@ -169,7 +169,7 @@ This separation is important.
 - is the file readable?
 - is the JSON syntax valid?
 - are the required fields present?
-- do those fields have the expected JSON shape?
+- do those fields have the expected JSON structure?
 
 `src/validate.ml` is responsible for semantic rules such as:
 
