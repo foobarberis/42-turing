@@ -44,7 +44,8 @@ Run the program:
 - `src/execute.ml` — machine execution
 - `src/ft_turing.ml` — CLI entry point
 - `res/` — example machine descriptions
-- `test/test_parse.ml` — lightweight parser unit tests
+- `test/test_parse.ml` — parser unit tests
+- `test/test_validate.ml` — validation unit tests
 - `test/fixtures/parse/` — broken JSON fixtures used by parser tests
 - `test/run_all.sh` — integration-style run script
 
@@ -98,7 +99,7 @@ The parser converts raw JSON into these types. After that, the rest of the progr
 
 This is not yet a `machine`. It is only the raw parsed JSON tree.
 
-### 3. Small helper functions narrow the JSON shape
+### 3. Small helper functions narrow the JSON structure
 
 `src/parse.ml` defines four small helpers:
 
@@ -107,7 +108,7 @@ This is not yet a `machine`. It is only the raw parsed JSON tree.
 - `as_list json` — expects a JSON array and returns an OCaml list of JSON values
 - `as_char json` — expects a JSON string of length 1 and returns an OCaml `char`
 
-These helpers do only one job each. If the JSON shape is wrong, they raise `Parse_error`.
+These helpers do only one job each. If the JSON structure is wrong, they raise `Parse_error`.
 
 This keeps the rest of the parser simple: the higher-level functions can say what they want to extract instead of re-checking the JSON type every time.
 
@@ -168,7 +169,7 @@ This separation is important.
 - is the file readable?
 - is the JSON syntax valid?
 - are the required fields present?
-- do those fields have the expected JSON shape?
+- do those fields have the expected JSON structure?
 
 `src/validate.ml` is responsible for semantic rules such as:
 
@@ -182,3 +183,166 @@ In other words:
 
 - parsing checks structure
 - validation checks meaning
+
+## Validation overview
+
+The validation code is also split into small steps.
+
+### 1. Validation works on typed values, not raw JSON
+
+By the time validation starts, the file has already been parsed into a `machine` record.
+
+That means `src/validate.ml` does not need to ask questions such as:
+
+- is this field a JSON string?
+- is this field a JSON array?
+- is this key missing?
+
+Those were parser concerns.
+
+The validator only checks semantic rules on already-typed values such as:
+
+- `char list`
+- `string list`
+- `transition`
+- `machine`
+
+### 2. A dedicated exception separates semantic failures from parse failures
+
+`src/validate.ml` defines:
+
+```ocaml
+exception Validation_error of string
+```
+
+This keeps validation errors separate from parser errors:
+
+- `Parse_error` — the file or JSON structure is wrong
+- `Validation_error` — the machine structure is parseable, but invalid
+
+For example, a machine may parse successfully and still be rejected because:
+
+- `blank` is not in `alphabet`
+- `initial` is not in `states`
+- a transition points to an unknown state
+
+### 3. Small helpers keep the validation rules readable
+
+The validator uses a few tiny helpers:
+
+- `ensure condition message` — raise `Validation_error` if `condition` is false
+- `is_in x xs` — membership check
+- `all_in xs allowed` — subset-style check
+- `has_duplicates xs` — duplicate detection
+
+This allows the actual validation functions to read like direct statements of the rules.
+
+For example:
+
+```ocaml
+ensure (is_in blank alphabet) "blank must be in alphabet"
+```
+
+That is easier to read than repeating the same `if ... then raise ...` logic everywhere.
+
+### 4. Basic machine fields are validated first
+
+The first checks are about the core machine fields.
+
+`validate_alphabet` checks:
+
+- `alphabet` is not empty
+- `alphabet` has no duplicates
+
+`validate_blank` checks:
+
+- `blank` is in `alphabet`
+
+`validate_states` checks:
+
+- `states` is not empty
+- `states` has no duplicates
+
+`validate_initial` checks:
+
+- `initial` is in `states`
+
+`validate_finals` checks:
+
+- `finals` are in `states`
+- `finals` has no duplicates
+
+In this project, the single `alphabet` field behaves like the tape alphabet. That is why the blank symbol must belong to it, even though later the runtime input itself must not contain blank.
+
+### 5. Transition validation is split into levels
+
+A transition has several independent semantic constraints.
+
+`validate_transition` checks one transition record:
+
+- `read` is in `alphabet`
+- `write` is in `alphabet`
+- `to_state` is in `states`
+
+`validate_state_transitions` checks one source state's transition list:
+
+- read symbols are unique within that one source state
+- each transition in the list is individually valid
+
+This mirrors how deterministic Turing machines are usually described: for one source state, a given read symbol should not map to two different transitions.
+
+### 6. The full transition table is then validated
+
+The machine stores transitions as:
+
+```ocaml
+(string * transition list) list
+```
+
+Each pair means:
+
+- source state name
+- list of transitions starting from that state
+
+`validate_transitions` checks:
+
+- transition source states are in `states`
+- transition source state entries are unique
+- each source state's transition list passes `validate_state_transitions`
+
+So validation happens both at the outer level of the table and at the inner level of each transition list.
+
+### 7. `validate_machine` is the single entry point for machine validation
+
+`validate_machine` runs the machine checks in a fixed order:
+
+1. alphabet
+2. blank
+3. states
+4. initial
+5. finals
+6. transitions
+
+This gives one place that represents the semantic contract of a valid machine.
+
+The order also matters in practice because validation stops at the first error.
+
+### 8. Input validation is separate from machine validation
+
+The machine description and the runtime input are different things, so they are validated separately.
+
+`validate_input` checks:
+
+- every input symbol is in `alphabet`
+- the input does not contain `blank`
+
+This is the usual distinction:
+
+- the tape alphabet includes the blank symbol
+- the user-provided input must not already contain blank cells
+
+### 9. Tests focus on one broken rule at a time
+
+`test/test_validate.ml` builds a known-good machine value and then changes one part per test.
+
+That test style is useful because validation stops at the first failure. If one test breaks several rules at once, it becomes harder to tell which rule is actually being exercised.
