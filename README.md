@@ -1,6 +1,7 @@
 # ft_turing
 
-`ft_turing` is a Turing machine simulator written in OCaml. It reads a machine description from a JSON file and runs it on a given input.
+`ft_turing` is a Turing machine simulator written in OCaml. It reads a machine
+description from a JSON file and runs it on a given input.
 
 ## Bootstrap
 
@@ -29,8 +30,9 @@ Run the program:
 - `make` or `make all` — install required dependencies if needed, then build `ft_turing`
 - `make byte` — build the bytecode binary `ft_turing.byte`
 - `make unit` or `make ut` — build and run the unit tests
+- `make e2e` — run the end-to-end cases from `test/run_all.sh` and write the output to `test/log.txt`
+- `make test` — run both the unit tests and the end-to-end cases
 - `make setup` — create the local `opam` switch and install required dependencies
-- `make test` — run `test/run_all.sh` and write the output to `test/log.txt`
 - `make clean` — remove the build directory `_build/`
 - `make fclean` — run `clean` and remove `ft_turing` and `ft_turing.byte`
 - `make re` — run `fclean` then rebuild everything
@@ -48,6 +50,37 @@ Run the program:
 - `test/test_validate.ml` — validation unit tests
 - `test/fixtures/parse/` — broken JSON fixtures used by parser tests
 - `test/run_all.sh` — integration-style run script
+
+## How a Turing machine works
+
+A Turing machine has:
+
+- a tape
+- a head on one tape cell
+- a current state
+- a transition table
+
+The usual model assumes an unbounded tape: the machine can always move farther
+left or right, and cells outside the currently used area are blank. In a
+simulator, this is handled by growing the represented tape when needed and
+treating unseen cells as the blank symbol. That is the intended execution model
+here, even though `src/execute.ml` is still empty.
+
+Each step reads the current symbol, finds the transition for `(state, symbol)`,
+writes a symbol, moves left or right, and switches state. In this codebase, one
+transition is represented by:
+
+```ocaml
+type transition = {
+  read : char;
+  to_state : string;
+  write : char;
+  action : action;
+}
+```
+
+A run stops when the machine reaches a final state or when no transition matches
+the current `(state, symbol)` pair.
 
 ## Parsing overview
 
@@ -86,7 +119,9 @@ If you come from C:
 - a record such as `transition = { ... }` is close to a `struct`
 - a `list` is an immutable linked list
 
-The parser converts raw JSON into these types. After that, the rest of the program no longer works with raw JSON strings such as `"LEFT"`; it works with typed values such as `Left`.
+The parser converts raw JSON into these types. After that, the rest of the
+program no longer works with raw JSON strings such as `"LEFT"`; it works with
+typed values such as `Left`.
 
 ### 2. Raw JSON is loaded first
 
@@ -95,7 +130,8 @@ The parser converts raw JSON into these types. After that, the rest of the progr
 - input: file path
 - output: `Yojson.Basic.t`
 
-`Yojson.Basic.t` is the library's generic JSON tree type. It can represent any JSON value: object, array, string, number, boolean, or null.
+`Yojson.Basic.t` is the library's generic JSON tree type. It can represent any
+JSON value: object, array, string, number, boolean, or null.
 
 This is not yet a `machine`. It is only the raw parsed JSON tree.
 
@@ -110,29 +146,23 @@ This is not yet a `machine`. It is only the raw parsed JSON tree.
 
 These helpers do only one job each. If the JSON structure is wrong, they raise `Parse_error`.
 
-This keeps the rest of the parser simple: the higher-level functions can say what they want to extract instead of re-checking the JSON type every time.
+This keeps the rest of the parser simple: the higher-level functions can say
+what they want to extract instead of re-checking the JSON type every time.
 
-### 4. Field parsers build the machine piece by piece
+### 4. Field parsers use those helpers
 
-Examples:
+`parse_name`, `parse_alphabet`, `parse_blank`, `parse_states`,
+`parse_initial`, and `parse_finals` all follow the same pattern: fetch one
+field, then convert it to the expected OCaml type.
 
-- `parse_name`
-- `parse_alphabet`
-- `parse_blank`
-- `parse_states`
-- `parse_initial`
-- `parse_finals`
+For example, `parse_alphabet`:
 
-They all follow the same pattern:
+1. gets the `"alphabet"` field
+2. checks that it is a JSON array
+3. converts each one-character string into an OCaml `char`
 
-1. fetch one field from the JSON object
-2. convert it to the expected OCaml type
-
-For example, `parse_alphabet` means:
-
-1. get the `"alphabet"` field
-2. verify that it is a JSON array
-3. convert each element of that array from a one-character string to an OCaml `char`
+This keeps the parser regular: once the helpers exist, each field parser is a
+small description of the data it expects.
 
 ### 5. Transition parsing mirrors the JSON structure
 
@@ -156,7 +186,8 @@ It becomes this OCaml record:
 The parser has two levels:
 
 - `parse_transition` parses one transition object
-- `parse_transitions` parses the full `transitions` field, which is a JSON object mapping each state name to a list of transition objects
+- `parse_transitions` parses the full `transitions` field, which is a JSON
+  object mapping each state name to a list of transition objects
 
 The final step is `parse_machine`, which assembles a complete `machine` record.
 
@@ -187,6 +218,19 @@ In other words:
 ## Validation overview
 
 The validation code is also split into small steps.
+
+### Validation rules and why they exist
+
+The current implementation enforces these rules:
+
+- `alphabet` must be non-empty and contain no duplicates, so symbols form a usable set.
+- `blank` must belong to `alphabet`, so empty tape cells use a legal tape symbol.
+- `states` must be non-empty and contain no duplicates, so state names are usable and unambiguous.
+- `initial` must be in `states`, and `finals` must be a duplicate-free subset of `states`, so execution only starts or halts in declared states.
+- each transition source state and each transition `to_state` must be in `states`, so the transition table never references unknown states.
+- each transition `read` and `write` symbol must be in `alphabet`, so the machine never reads or writes unknown symbols.
+- within one source state, `read` symbols must be unique, so `(state, symbol)` lookup stays deterministic.
+- runtime input must use only alphabet symbols and must not contain `blank`, so user input starts as tape data, not empty cells.
 
 ### 1. Validation works on typed values, not raw JSON
 
@@ -245,76 +289,9 @@ ensure (is_in blank alphabet) "blank must be in alphabet"
 
 That is easier to read than repeating the same `if ... then raise ...` logic everywhere.
 
-### 4. Basic machine fields are validated first
+### 4. Machine and transition validation follow the structure of the data
 
-The first checks are about the core machine fields.
-
-`validate_alphabet` checks:
-
-- `alphabet` is not empty
-- `alphabet` has no duplicates
-
-`validate_blank` checks:
-
-- `blank` is in `alphabet`
-
-`validate_states` checks:
-
-- `states` is not empty
-- `states` has no duplicates
-
-`validate_initial` checks:
-
-- `initial` is in `states`
-
-`validate_finals` checks:
-
-- `finals` are in `states`
-- `finals` has no duplicates
-
-In this project, the single `alphabet` field behaves like the tape alphabet. That is why the blank symbol must belong to it, even though later the runtime input itself must not contain blank.
-
-### 5. Transition validation is split into levels
-
-A transition has several independent semantic constraints.
-
-`validate_transition` checks one transition record:
-
-- `read` is in `alphabet`
-- `write` is in `alphabet`
-- `to_state` is in `states`
-
-`validate_state_transitions` checks one source state's transition list:
-
-- read symbols are unique within that one source state
-- each transition in the list is individually valid
-
-This mirrors how deterministic Turing machines are usually described: for one source state, a given read symbol should not map to two different transitions.
-
-### 6. The full transition table is then validated
-
-The machine stores transitions as:
-
-```ocaml
-(string * transition list) list
-```
-
-Each pair means:
-
-- source state name
-- list of transitions starting from that state
-
-`validate_transitions` checks:
-
-- transition source states are in `states`
-- transition source state entries are unique
-- each source state's transition list passes `validate_state_transitions`
-
-So validation happens both at the outer level of the table and at the inner level of each transition list.
-
-### 7. `validate_machine` is the single entry point for machine validation
-
-`validate_machine` runs the machine checks in a fixed order:
+`validate_machine` checks the machine in a fixed order:
 
 1. alphabet
 2. blank
@@ -323,11 +300,26 @@ So validation happens both at the outer level of the table and at the inner leve
 5. finals
 6. transitions
 
-This gives one place that represents the semantic contract of a valid machine.
+The order matters because validation stops at the first error.
 
-The order also matters in practice because validation stops at the first error.
+The field-level functions (`validate_alphabet`, `validate_blank`,
+`validate_states`, `validate_initial`, `validate_finals`) cover the rules
+summarized above. In this project, `alphabet` acts as the tape alphabet, so the
+blank symbol must belong to it even though the runtime input itself must not
+contain blank.
 
-### 8. Input validation is separate from machine validation
+Transition validation is split into three levels:
+
+- `validate_transition` checks one transition
+- `validate_state_transitions` checks one source state's transition list,
+  including unique `read` symbols
+- `validate_transitions` checks the full transition table, including valid and
+  unique source states
+
+This mirrors the shape of the machine description and keeps each function
+focused.
+
+### 5. Input validation is separate from machine validation
 
 The machine description and the runtime input are different things, so they are validated separately.
 
@@ -341,8 +333,103 @@ This is the usual distinction:
 - the tape alphabet includes the blank symbol
 - the user-provided input must not already contain blank cells
 
-### 9. Tests focus on one broken rule at a time
+### 6. Tests focus on one broken rule at a time
 
 `test/test_validate.ml` builds a known-good machine value and then changes one part per test.
 
-That test style is useful because validation stops at the first failure. If one test breaks several rules at once, it becomes harder to tell which rule is actually being exercised.
+That test style is useful because validation stops at the first failure. If one
+test breaks several rules at once, it becomes harder to tell which rule is
+actually being exercised.
+
+## Functional programming examples
+
+Here, "functional programming" mostly means: describe data with types, pass
+values through small functions, and process lists without mutable state.
+
+### 1. Variants encode a closed set of values
+
+```ocaml
+type action =
+  | Left
+  | Right
+```
+
+`action` can only be `Left` or `Right`. This is safer than keeping head movement
+as a free-form string everywhere in the program.
+
+### 2. Pattern matching converts raw input into typed values
+
+```ocaml
+let parse_action json =
+  match as_string json with
+  | "LEFT" -> Left
+  | "RIGHT" -> Right
+  | s -> raise (Parse_error ("invalid action: " ^ s))
+```
+
+Read this as:
+
+1. extract a string from JSON
+2. convert `"LEFT"` to `Left`
+3. convert `"RIGHT"` to `Right`
+4. reject anything else immediately
+
+After this step, the rest of the code no longer needs to compare movement strings.
+
+### 3. List functions transform and validate data
+
+```ocaml
+let parse_alphabet json =
+  List.map as_char (as_list (field "alphabet" json))
+```
+
+This is a compact pipeline:
+
+1. get the `alphabet` field
+2. ensure it is a JSON list
+3. convert each JSON value into a `char`
+4. return a new `char list`
+
+`List.map` builds a new list instead of modifying an existing one.
+
+The same style appears in validation:
+
+```ocaml
+let validate_state_transitions transitions alphabet states =
+  let reads = List.map (fun transition -> transition.read) transitions in
+  ensure (not (has_duplicates reads)) "transition reads must be unique within one source state";
+  List.iter (fun transition -> validate_transition transition alphabet states) transitions
+```
+
+Here, `List.map` first derives the list of read symbols, then `List.iter`
+checks each transition. The code says what must be checked, without counters,
+indexes, or mutable flags.
+
+### 4. Recursion follows the shape of an immutable list
+
+```ocaml
+let rec has_duplicates xs =
+  match xs with
+  | [] | [_] -> false
+  | x :: rest -> is_in x rest || has_duplicates rest
+```
+
+The logic is structural:
+
+- an empty list has no duplicates
+- a one-element list has no duplicates
+- otherwise, check whether the head appears in the tail, then recurse on the tail
+
+### 5. Small functions compose into larger behavior
+
+```ocaml
+let validate_machine machine =
+  validate_alphabet machine.alphabet;
+  validate_blank machine.blank machine.alphabet;
+  validate_states machine.states;
+  validate_initial machine.initial machine.states;
+  validate_finals machine.finals machine.states;
+  validate_transitions machine.transitions machine.alphabet machine.states
+```
+
+Each helper checks one rule. The top-level validator is just the ordered composition of those smaller checks.
