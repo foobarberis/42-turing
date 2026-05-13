@@ -38,17 +38,15 @@ let move _direction _tape =
 (* Finds the transition rule for the given state and symbol
 *)
 let find_transition _state _symbol _machine =
-	let transition = match _machine.transitions with
-		| (from_state, transitions) :: _ when from_state = _state ->
-			List.find_opt (fun t -> t.read = _symbol) transitions
-		| _ :: rest -> None 
-		| [] -> None
-		in transition
+	match List.assoc_opt _state _machine.transitions with
+	| None -> None
+	| Some transitions ->
+		match List.find_opt (fun t -> t.read = _symbol) transitions with
+		| Some transition -> Some transition
+		| None -> None
 
 let execute_transition _transition _tape =
-	let tape_after_write = write _transition.write _tape 
-	in let new_tape = move _transition.action tape_after_write 
-	in new_tape
+	let new_tap = write _transition.write _tape in move _transition.action new_tap 
 
 (* ========== PRINTING FUNCTIONS ==========
 *)
@@ -92,7 +90,11 @@ let step _machine _state _tape =
 	| Some _transition ->
 		let new_tape = execute_transition _transition _tape in
 		Continue(_transition.to_state, new_tape, _transition)
-	| None -> Blocked(_state, _tape)
+	| None ->
+		if List.mem _state _machine.finals then
+			Halted(_tape)
+		else
+			 Blocked(_state, _tape)
 
 (* ========== MAIN EXECUTION LOOP ==========
    Runs the machine until it reaches a final state or gets blocked
@@ -110,3 +112,4 @@ let rec execute _machine _tape _state =
 			print_step _state _tape _transition;
 			execute _machine new_tape new_state
 		| Blocked(_state, _tape) -> Blocked(_state, _tape)
+		| Halted(_tape) -> Halted(_tape)
