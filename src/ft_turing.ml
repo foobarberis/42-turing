@@ -8,7 +8,23 @@ let usage =
 
 let print_usage channel = output_string channel (usage ^ "\n")
 
-let run _jsonfile _input = ()
+let run jsonfile input =
+  let machine =
+    try Parse.load_machine jsonfile with
+    | Parse.Parse_error message ->
+        raise (Parse.Parse_error (jsonfile ^ ": " ^ message))
+  in
+  begin
+    try Validate.validate_machine machine with
+    | Validate.Validation_error message ->
+        raise (Validate.Validation_error (jsonfile ^ ": " ^ message))
+  end;
+  begin
+    try Validate.validate_input input machine.alphabet machine.blank with
+    | Validate.Validation_error message ->
+        raise (Validate.Validation_error ("input: " ^ message))
+  end;
+  machine
 
 let main () =
   match Array.to_list Sys.argv with
@@ -16,7 +32,9 @@ let main () =
       print_usage stdout;
       0
   | [_; jsonfile; input] ->
-      run jsonfile input;
+      let machine = run jsonfile input in
+      (* Execute.execute machine input; *)
+      ignore machine;
       0
   | _ ->
       print_usage stderr;
@@ -24,6 +42,12 @@ let main () =
 
 let () =
   try exit (main ()) with
+  | Parse.Parse_error message ->
+      Printf.eprintf "Parse error: %s\n" message;
+      exit 1
+  | Validate.Validation_error message ->
+      Printf.eprintf "Validation error: %s\n" message;
+      exit 1
   | Sys_error message ->
       Printf.eprintf "Error: %s\n" message;
       exit 1
