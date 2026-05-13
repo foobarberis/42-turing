@@ -16,6 +16,7 @@
 	"finals"  : [ "HALT"],
 	"transitions" : {
 		"init": [
+			{ "read" : ".", "to_state": "HALT", "write": "y", "action": "LEFT"},
 			{ "read" : "-", "to_state": "init", "write": "-", "action": "RIGHT"},
 			{ "read" : "0", "to_state": "get_last_zero", "write": "-", "action": "RIGHT"},
 			{ "read" : "1", "to_state": "get_last_one", "write": "-", "action": "RIGHT"},
@@ -42,7 +43,7 @@
 			{ "read" : "-", "to_state": "is_one", "write": "-", "action": "LEFT"},
 			{ "read" : ".", "to_state": "HALT", "write": ".", "action": "LEFT"},
 			{ "read" : "1", "to_state": "get_most_left", "write": "-", "action": "LEFT"},
-			{ "read" : "0", "to_state": "deny", "write": "1", "action": "RIGHT"}
+			{ "read" : "0", "to_state": "deny", "write": "0", "action": "RIGHT"}
 		],
 
 		"is_zero": [

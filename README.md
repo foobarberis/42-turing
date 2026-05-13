@@ -22,7 +22,7 @@ make
 Run the program:
 
 ```sh
-./ft_turing res/unary_sub.json "111-11="
+./ft_turing res/unary_add.json "11+1111="
 ```
 
 ## Make targets
