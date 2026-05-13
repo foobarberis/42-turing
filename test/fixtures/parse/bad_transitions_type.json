@@ -1,0 +1,9 @@
+{
+  "name": "bad_transitions_type",
+  "alphabet": ["0", "."],
+  "blank": ".",
+  "states": ["q0", "HALT"],
+  "initial": "q0",
+  "finals": ["HALT"],
+  "transitions": []
+}
