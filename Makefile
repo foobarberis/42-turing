@@ -56,8 +56,10 @@ $(UNIT): $(BUILDDIR)/types.cmo $(BUILDDIR)/parse.cmo $(BUILDDIR)/validate.cmo $(
 unit ut: $(UNIT)
 	$(RUN) ./$(UNIT)
 
-test: $(NAME) test/run_all.sh
+e2e: $(NAME) test/run_all.sh
 	$(RUN) ./test/run_all.sh
+
+test: unit e2e
 
 clean:
 	@rm -rf $(BUILDDIR)
@@ -70,4 +72,4 @@ re: fclean all
 distclean: fclean
 	@rm -rf _opam
 
-.PHONY: all byte setup unit ut test clean fclean re distclean
+.PHONY: all byte setup unit ut e2e test clean fclean re distclean
