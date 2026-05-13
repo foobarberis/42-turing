@@ -2,79 +2,78 @@ open Types
 
 (* Writes a symbol to the tape at the current head position
 *)
-let write  _symbol _tape =
-	let new_tape = { _tape with current = _symbol } in
+let write (symbol: char) (tape: tape) : tape =
+	let new_tape = { tape with current = symbol } in
 	new_tape
 
 (* ========================= TAPE MOVEMENT HELPERS =====================
 *)
-let move_left _tape =
-	let new_tape = match _tape with
+let move_left (tape: tape) (machine : machine)=
+	match tape with
 	| { left = []; current; right } ->
-		{ left = []; current =  '_'(*TODO change to blank symbol*); right = current :: right }
+		{ left = []; current =  machine.blank; right = current :: right }
 	| { left = x :: xs; current; right } ->
-		{ left = xs; current = x; right = current :: right } in
-		new_tape
+		{ left = xs; current = x; right = current :: right }
 
-let move_right _tape = 
-	let new_tape = match _tape with
+let move_right (tape: tape) (machine: machine) : tape = 
+	match tape with
 	| { left; current; right = [] } ->
-		{ left = current :: left; current =  '_' (*TODO change to blank symbol*); right = [] }
+		{ left = current :: left; current =  machine.blank ; right = [] }
 	| { left; current; right = x :: xs } ->
-		{ left = current :: left; current = x; right = xs } in
-		new_tape
+		{ left = current :: left; current = x; right = xs }
 
 (* Moves the tape head one position in the given direction
 *)
-let move _direction _tape =
-	let new_tape = match _direction with
-		| Left -> move_left _tape
-		| Right -> move_right _tape
-	in new_tape
+let move (action: action) (tape: tape) (machine: machine): tape =
+	 match action with
+		| Left -> move_left tape machine
+		| Right -> move_right tape machine
 
 (* ========== TRANSITION LOOKUP ==========
  *)
 
 (* Finds the transition rule for the given state and symbol
 *)
-let find_transition _state _symbol _machine =
-	match List.assoc_opt _state _machine.transitions with
+let find_transition (state: string) (symbol: char) (machine: machine)  : transition option =
+	match List.assoc_opt state machine.transitions with
 	| None -> None
 	| Some transitions ->
-		match List.find_opt (fun t -> t.read = _symbol) transitions with
+		match List.find_opt (fun t -> t.read = symbol) transitions with
 		| Some transition -> Some transition
 		| None -> None
 
-let execute_transition _transition _tape =
-	let new_tap = write _transition.write _tape in move _transition.action new_tap 
+let execute_transition (transition: transition) (tape: tape) (machine: machine): tape =
+	let new_tap = write transition.write tape in move transition.action new_tap machine
 
 (* ========== PRINTING FUNCTIONS ==========
 *)
 let string_of_char lst =
 	String.concat "" (List.map (String.make 1) lst)
 
-let string_of_transition _state _transition = 
+let string_of_transition (state: string) (transition: transition): string = 
 	"(" 
-	^ _state
+	^ state
 	^ ", "
-	^ String.make 1 _transition.read 
+	^ String.make 1 transition.read 
 	^ ") -> (" 
-	^ _transition.to_state 
+	^ transition.to_state 
 	^ ", " 
-	^ String.make 1 _transition.write ^ ", " 
-	^ (match _transition.action with Left -> "LEFT" | Right -> "RIGHT") ^ ")"
+	^ String.make 1 transition.write ^ ", " 
+	^ (match transition.action with Left -> "LEFT" | Right -> "RIGHT") ^ ")"
 
-let tape_to_string _tape = 
+let tape_to_string (tape: tape) (machine: machine) : string = 
 	"[" 
-	^ string_of_char  _tape.left 
+	^  string_of_char (List.rev tape.left) 
 	^ "<" 
-	^ String.make 1 _tape.current 
+	^ String.make 1 tape.current 
 	^ ">" 
-	^ string_of_char  _tape.right 
+	^ match string_of_char  tape.right with
+	| s when String.length s + (List.length tape.left)  + 1 > 20 -> s
+	| s -> s ^ String.make (20 - String.length s - (List.length tape.left) - 1) machine.blank
 	^ "]"
 
-let print_step _state _tape _transition =
-	Printf.printf "%s %s\n"(tape_to_string _tape) (string_of_transition _state _transition) 
+let print_step (state: string) (tape: tape) (transition: transition) (machine: machine) =
+	Printf.printf "%s %s\n"(tape_to_string tape machine) (string_of_transition state transition) 
 
 (* ========== SINGLE EXECUTION STEP ==========
    Performs one complete step of machine execution:
@@ -86,17 +85,17 @@ let print_step _state _tape _transition =
 
 (* Executes a single step of the Turing machine
 *)
-let step _machine _state _tape =
-	let current_symbol = _tape.current in
-	match find_transition _state current_symbol _machine with
-	| Some _transition ->
-		let new_tape = execute_transition _transition _tape in
-		Continue(_transition.to_state, new_tape, _transition)
+let step (machine: machine) (state: string) (tape: tape) =
+	let current_symbol = tape.current in
+	match find_transition state current_symbol machine with
+	| Some transition ->
+		let new_tape = execute_transition transition tape machine in
+		Continue(transition.to_state, new_tape, transition)
 	| None ->
-		if List.mem _state _machine.finals then
-			Halted(_tape)
+		if List.mem state machine.finals then
+			Halted(tape)
 		else
-			 Blocked(_state, _tape)
+			 Blocked(state, tape)
 
 (* ========== MAIN EXECUTION LOOP ==========
    Runs the machine until it reaches a final state or gets blocked
@@ -105,13 +104,13 @@ let step _machine _state _tape =
 
 (* Runs the machine from the current state and tape until halting
 *)
-let rec execute _machine _tape _state =
-	if List.mem _state _machine.finals then
-		Halted(_tape)
+let rec execute (machine: machine) (tape: tape) (state: string)  =
+	if List.mem state machine.finals then
+		Halted(tape)
 	else
-		match step _machine _state _tape with
-		| Continue(new_state, new_tape, _transition) -> 
-			print_step _state _tape _transition;
-			execute _machine new_tape new_state
-		| Blocked(_state, _tape) -> Blocked(_state, _tape)
-		| Halted(_tape) -> Halted(_tape)
+		match step machine state tape with
+		| Continue(new_state, new_tape, transition) -> 
+			print_step state tape transition machine; (*TODO change to log*)
+			execute machine new_tape new_state
+		| Blocked(state, tape) -> Blocked(state, tape)
+		| Halted(tape) -> Halted(tape)
