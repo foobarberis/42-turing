@@ -27,7 +27,7 @@ type tape = {
 }
 
 (* Execution result variant types *)
-type exec_result =
+type step_res =
   | Halted of tape
   | Blocked of string * tape
   | Continue of string * tape * transition

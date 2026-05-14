@@ -9,7 +9,7 @@ UNIT_OBJ = $(BUILDDIR)/test_parse.cmo \
 		   $(BUILDDIR)/test_validate.cmo \
 		   $(BUILDDIR)/test_execute.cmo
 
-MODULES = types parse validate execute ft_turing
+MODULES = types format trace parse validate execute ft_turing
 NATIVE_OBJ = $(addprefix $(BUILDDIR)/,$(addsuffix .cmx,$(MODULES)))
 BYTE_OBJ = $(addprefix $(BUILDDIR)/,$(addsuffix .cmo,$(MODULES)))
 
