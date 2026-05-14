@@ -7,7 +7,7 @@ BUILDDIR = _build
 UNIT = $(BUILDDIR)/test_unit.byte
 UNIT_OBJ = $(BUILDDIR)/test_parse.cmo \
 		   $(BUILDDIR)/test_validate.cmo \
-		   $(BUILDDIR)/test_execute.cmo
+		   $(BUILDDIR)/test_exec.cmo
 
 MODULES = types format trace parse validate execute ft_turing
 NATIVE_OBJ = $(addprefix $(BUILDDIR)/,$(addsuffix .cmx,$(MODULES)))
@@ -46,7 +46,7 @@ $(BUILDDIR)/test_parse.cmo: test/test_parse.ml Makefile | $(BUILDDIR) setup
 $(BUILDDIR)/test_validate.cmo: test/test_validate.ml Makefile | $(BUILDDIR) setup
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -c $< -o $@
 
-$(BUILDDIR)/test_execute.cmo: test/test_execute.ml Makefile | $(BUILDDIR) setup
+$(BUILDDIR)/test_exec.cmo: test/test_exec.ml Makefile | $(BUILDDIR) setup
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -c $< -o $@
 
 $(NAME): $(NATIVE_OBJ)
@@ -55,7 +55,7 @@ $(NAME): $(NATIVE_OBJ)
 $(BYTE): $(BYTE_OBJ)
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -linkpkg $^ -o $@
 
-$(UNIT): $(BUILDDIR)/types.cmo $(BUILDDIR)/parse.cmo $(BUILDDIR)/validate.cmo $(BUILDDIR)/execute.cmo $(UNIT_OBJ)
+$(UNIT): $(BUILDDIR)/types.cmo $(BUILDDIR)/format.cmo $(BUILDDIR)/trace.cmo $(BUILDDIR)/parse.cmo  $(BUILDDIR)/validate.cmo $(BUILDDIR)/execute.cmo $(UNIT_OBJ)
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -linkpkg $^ -o $@
 
 unit ut: $(UNIT)

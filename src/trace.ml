@@ -37,5 +37,5 @@ let header_info (out: out_channel) (m: machine): out_channel =
 	@param m current machine
 	@return file descriptor of the *)
 let init_machine_info_file (m: machine): out_channel =
-		let out = open_outfile "Trace" in
+		let out = open_outfile "Trace.log" in
 		header_info out m
