@@ -74,7 +74,7 @@ let step (machine: machine) (state: string) (tape: tape) =
 
 (* Runs the machine from the current state and tape until halting
 *)
-let rec execute (machine: machine) (tape: tape) (state: string) (out: out_channel)  =
+let rec execute (machine: machine) (tape: tape) (state: string) (out: out_channel): step_res  =
 	if List.mem state machine.finals then
 		Halted(tape)
 	else

@@ -73,10 +73,10 @@ let string_of_machine(m: machine) : string =
 (*transform machine info to one string
 	@param Continue info of the current step
 	@param m current machine*)
-let string_of_step (Continue(state, tape, transition)) (m: machine) : string =
- 	string_of_tape tape m
-	^ "\n" 
-	^ string_of_transition state transition
+let string_of_step (res: step_res) (m: machine) : string =
+	match res with
+		| Continue(state, tape, transition) -> string_of_tape tape m ^ "\n" ^ string_of_transition state transition
+		| _ -> ""
 
 (*Transform String to tape
 	@Param str string convert*)

@@ -33,8 +33,9 @@ let main () =
       0
   | [_; jsonfile; input] ->
       let machine = run jsonfile input in
-      (* Execute.execute machine input; *)
-      ignore machine;
+      let out = Trace.init_machine_info_file machine in
+      let step_res = Execute.execute machine (Format.tape_of_string input) machine.initial out in 
+      Trace.step_info step_res machine out;
       0
   | _ ->
       print_usage stderr;

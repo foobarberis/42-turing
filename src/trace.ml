@@ -24,6 +24,23 @@ let step_info (info: step_res) (machine: machine) (out: out_channel): unit =
 	match info with
 	| Continue(state, tape, transition) ->
 			Printf.fprintf out "%s\n" (Format.string_of_step info machine) (*TODO verify out*)
+	| Blocked(state, tape) -> Printf.fprintf out "%s\n" "blocked"
+	| Halted(tape) -> Printf.fprintf out "%s\n" "halted"
+
+(*print the header info of the machine
+	@param msg string of header of the current machine
+	@param out file descriptor*)
+let header_info (out: out_channel) (m: machine): out_channel =
+		output_string out (Format.string_of_header m.initial);
+		out
+
+(*open info file and write header of the machine
+	@param m current machine
+	@return file descriptor of the *)
+let init_machine_info_file (m: machine): out_channel =
+		let out = open_outfile "Trace" in
+		header_info out m
+
 (*
 (*print error*)
 let error (message: string): unit = *)
