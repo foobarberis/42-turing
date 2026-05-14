@@ -33,9 +33,14 @@ let header_info (out: out_channel) (m: machine): out_channel =
 	machine_info m out;
 	out
 
+let create_dir_if_missing path =
+  if not (Sys.file_exists path) then
+    Sys.mkdir path 0o755
+
 (*open info file and write header of the machine
 	@param m current machine
 	@return file descriptor of the *)
 let init_machine_info_file (m: machine): out_channel =
-		let out = open_outfile "Trace.log" in
+		create_dir_if_missing "log";
+		let out = open_outfile ("log/" ^ m.name ^ "_info.log") in
 		header_info out m

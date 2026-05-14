@@ -68,6 +68,7 @@ test: unit e2e
 
 clean:
 	@rm -rf $(BUILDDIR)
+	@rm -rf log
 
 fclean: clean
 	@rm -f $(NAME) $(BYTE)
