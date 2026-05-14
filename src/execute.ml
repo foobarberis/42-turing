@@ -79,7 +79,7 @@ let rec execute (machine: machine) (tape: tape) (state: string) (out: out_channe
 		Halted(tape)
 	else
 		match step machine state tape with
-		| Continue(new_state, new_tape, transition) -> Trace.step_info (Continue(new_state, new_tape, transition)) machine out;
+		| Continue(new_state, new_tape, transition) -> Trace.step_info (Continue(state, tape, transition)) machine out;
 			execute machine new_tape new_state out
 		| Blocked(state, tape) -> Blocked(state, tape)
 		| Halted(tape) -> Halted(tape)

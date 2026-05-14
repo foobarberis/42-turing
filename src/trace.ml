@@ -16,6 +16,9 @@ let close_outfile (out : out_channel): unit =
 let machine_info (m: machine) (out: out_channel): unit =
 	Printf.fprintf out "%s\n" (Format.string_of_machine m) (*TODO verify out*)
 
+let info_message (msg: string) (out: out_channel): unit = 
+	Printf.fprintf out "%s\n" msg
+
 (*print one step of the machine
 	@param info result of the one step
 	@param m current machine 
@@ -31,8 +34,9 @@ let step_info (info: step_res) (machine: machine) (out: out_channel): unit =
 	@param msg string of header of the current machine
 	@param out file descriptor*)
 let header_info (out: out_channel) (m: machine): out_channel =
-		output_string out (Format.string_of_header m.initial);
-		out
+	output_string out ((Format.string_of_header m.name) ^ "\n");
+	machine_info m out;
+	out
 
 (*open info file and write header of the machine
 	@param m current machine
@@ -40,10 +44,3 @@ let header_info (out: out_channel) (m: machine): out_channel =
 let init_machine_info_file (m: machine): out_channel =
 		let out = open_outfile "Trace" in
 		header_info out m
-
-(*
-(*print error*)
-let error (message: string): unit = *)
-
-(*let init_trace (machine : machine) : out_channel =
-	try open_out machine*)

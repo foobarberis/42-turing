@@ -10,7 +10,7 @@ let string_of_char (lst: char list): string =
 let string_of_header (m_name: string) : string =
 	String.make 80 '*' ^ "\n"
 	^ "*" ^ String.make 78 ' ' ^ "*\n"
-	^ "*" ^ String.make (39 - String.length m_name/2) ' ' ^ m_name ^ String.make (39 - String.length m_name/2) ' ' ^ "*\n"
+	^ "*" ^ String.make (39 - String.length m_name/2) ' ' ^ m_name ^ String.make (39 - String.length m_name/2 - 1) ' ' ^ "*\n"
 	^ "*" ^ String.make 78 ' ' ^ "*\n"
 	^ String.make 80 '*' 
 
@@ -18,6 +18,7 @@ let string_of_header (m_name: string) : string =
 	@param m current machine*)
 let string_of_machine_header (m: machine) : string =
 	"Alphabet: " ^ "[" ^ String.concat "; " (List.map (String.make 1) m.alphabet) ^ "]\n"
+	^ "Blank: " ^ String.make 1 m.blank ^ "\n"
 	^ "States: " ^ "[" ^ String.concat "; " (List.map (fun s -> s) m.states) ^ "]\n"
 	^ "Initial: " ^ m.initial ^ "\n"
 	^ "Finals: "  ^ "[" ^ String.concat "; " (List.map (fun s -> s) m.finals) ^ "]"
@@ -75,7 +76,7 @@ let string_of_machine(m: machine) : string =
 	@param m current machine*)
 let string_of_step (res: step_res) (m: machine) : string =
 	match res with
-		| Continue(state, tape, transition) -> string_of_tape tape m ^ "\n" ^ string_of_transition state transition
+		| Continue(state, tape, transition) -> string_of_tape tape m ^ " " ^ string_of_transition state transition
 		| _ -> ""
 
 (*Transform String to tape
