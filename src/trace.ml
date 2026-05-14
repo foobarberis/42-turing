@@ -24,12 +24,7 @@ let info_message (msg: string) (out: out_channel): unit =
 	@param m current machine 
 	@param out file descriptor*)
 let step_info (info: step_res) (machine: machine) (out: out_channel): unit =
-	match info with
-	| Continue(state, tape, transition) ->
-			Printf.fprintf out "%s\n" (Format.string_of_step info machine) (*TODO verify out*)
-	| Blocked(state, tape) -> Printf.fprintf out "%s\n" "blocked"
-	| Halted(tape) -> Printf.fprintf out "%s\n" "halted"
-
+	Printf.fprintf out "%s\n" (Format.string_of_step info machine) (*TODO verify out*)
 (*print the header info of the machine
 	@param msg string of header of the current machine
 	@param out file descriptor*)

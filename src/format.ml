@@ -60,8 +60,8 @@ let string_of_tape (tape: tape) (m: machine) : string =
 	^ String.make 1 tape.current 
 	^ ">" 
 	^ match string_of_char  tape.right with
-	| s when String.length s + (List.length tape.left)  + 1 > 20 -> s
-	| s -> s ^ String.make (20 - String.length s - (List.length tape.left) - 1) m.blank
+		| s when String.length s + (List.length tape.left)  + 1 > 20 -> s ^ "]"
+		| s -> s ^ String.make (20 - String.length s - (List.length tape.left) - 1) m.blank
 	^ "]"
 
 (*transform machine info to one string
@@ -77,7 +77,8 @@ let string_of_machine(m: machine) : string =
 let string_of_step (res: step_res) (m: machine) : string =
 	match res with
 		| Continue(state, tape, transition) -> string_of_tape tape m ^ " " ^ string_of_transition state transition
-		| _ -> ""
+		| Halted(tape) -> string_of_tape tape m
+		| Blocked(state, tape) -> string_of_tape tape m ^ "Blocked at this state " ^ state
 
 (*Transform String to tape
 	@Param str string convert*)
