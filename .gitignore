@@ -1,5 +1,6 @@
 _build/
 _opam/
+log/
 ft_turing
 ft_turing.byte
 *.cmi
