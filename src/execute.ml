@@ -8,7 +8,7 @@ let write (symbol: char) (tape: tape) : tape =
 
 (* ========================= TAPE MOVEMENT HELPERS =====================
 *)
-let move_left (tape: tape) (machine : machine)=
+let move_left (tape: tape) (machine : machine) : tape  =
 	match tape with
 	| { left = []; current; right } ->
 		{ left = []; current =  machine.blank; right = current :: right }
@@ -45,36 +45,6 @@ let find_transition (state: string) (symbol: char) (machine: machine)  : transit
 let execute_transition (transition: transition) (tape: tape) (machine: machine): tape =
 	let new_tap = write transition.write tape in move transition.action new_tap machine
 
-(* ========== PRINTING FUNCTIONS ==========
-*)
-let string_of_char lst =
-	String.concat "" (List.map (String.make 1) lst)
-
-let string_of_transition (state: string) (transition: transition): string = 
-	"(" 
-	^ state
-	^ ", "
-	^ String.make 1 transition.read 
-	^ ") -> (" 
-	^ transition.to_state 
-	^ ", " 
-	^ String.make 1 transition.write ^ ", " 
-	^ (match transition.action with Left -> "LEFT" | Right -> "RIGHT") ^ ")"
-
-let tape_to_string (tape: tape) (machine: machine) : string = 
-	"[" 
-	^  string_of_char (List.rev tape.left) 
-	^ "<" 
-	^ String.make 1 tape.current 
-	^ ">" 
-	^ match string_of_char  tape.right with
-	| s when String.length s + (List.length tape.left)  + 1 > 20 -> s
-	| s -> s ^ String.make (20 - String.length s - (List.length tape.left) - 1) machine.blank
-	^ "]"
-
-let print_step (state: string) (tape: tape) (transition: transition) (machine: machine) =
-	Printf.printf "%s %s\n"(tape_to_string tape machine) (string_of_transition state transition) 
-
 (* ========== SINGLE EXECUTION STEP ==========
    Performs one complete step of machine execution:
    1. Read current symbol from tape
@@ -104,13 +74,12 @@ let step (machine: machine) (state: string) (tape: tape) =
 
 (* Runs the machine from the current state and tape until halting
 *)
-let rec execute (machine: machine) (tape: tape) (state: string)  =
+let rec execute (machine: machine) (tape: tape) (state: string) (out: out_channel): step_res  =
 	if List.mem state machine.finals then
 		Halted(tape)
 	else
 		match step machine state tape with
-		| Continue(new_state, new_tape, transition) -> 
-			print_step state tape transition machine; (*TODO change to log*)
-			execute machine new_tape new_state
-		| Blocked(state, tape) -> Blocked(state, tape)
-		| Halted(tape) -> Halted(tape)
+		| Continue(new_state, new_tape, transition) -> Trace.step_info (Continue(state, tape, transition)) machine out;
+			execute machine new_tape new_state out
+		| Blocked(new_state, new_tape) -> Blocked(new_state, new_tape)
+		| Halted(new_tape) -> Halted(new_tape)
