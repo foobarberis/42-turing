@@ -6,8 +6,7 @@ SRCDIR = src
 BUILDDIR = _build
 UNIT = $(BUILDDIR)/test_unit.byte
 UNIT_OBJ = $(BUILDDIR)/test_parse.cmo \
-		   $(BUILDDIR)/test_validate.cmo \
-		   $(BUILDDIR)/test_exec.cmo
+		   $(BUILDDIR)/test_validate.cmo
 
 MODULES = types format trace parse validate execute ft_turing
 NATIVE_OBJ = $(addprefix $(BUILDDIR)/,$(addsuffix .cmx,$(MODULES)))
@@ -59,10 +58,13 @@ $(UNIT): $(BUILDDIR)/types.cmo $(BUILDDIR)/format.cmo $(BUILDDIR)/trace.cmo $(BU
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -linkpkg $^ -o $@
 
 unit ut: $(UNIT)
-	$(RUN) ./$(UNIT)
+	@$(RUN) ./$(UNIT)
 
-e2e: $(NAME) test/run_all.sh
-	$(RUN) ./test/run_all.sh
+e2e: $(NAME) test/test_cli.sh test/run_all.sh
+	@chmod +x test/test_cli.sh test/run_all.sh
+	@printf '\n'
+	@$(RUN) ./test/test_cli.sh
+	@$(RUN) ./test/run_all.sh
 
 test: unit e2e
 
