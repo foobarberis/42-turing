@@ -82,7 +82,7 @@ let string_of_step (res: step_res) (m: machine) : string =
 
 (*Transform String to tape
 	@Param str string convert*)
-let tape_of_string (str: string): tape = 
+let tape_of_string ?(blank = ' ') (str: string): tape = 
 	match List.of_seq(String.to_seq str) with
 		| x :: xs -> {left = [];  current = x; right = xs}
-		| [] -> {left = [];  current = ' '; right = []}
+		| [] -> {left = [];  current = blank; right = []}
