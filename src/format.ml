@@ -28,7 +28,7 @@ let string_of_machine_header (m: machine) : string =
 	@param t actual transition of the machine*)
 let string_of_transition (state: string) (t: transition): string = 
 	"(" 
-	^ state
+	^ state 
 	^ ", "
 	^ String.make 1 t.read 
 	^ ") -> (" 
@@ -50,15 +50,22 @@ let string_of_machine_transitions (states: string list) (ts: (string * transitio
 		|> String.concat "\n")
 	^ "\n" ^ String.make 80 '*'
 
+(* wrap the current caracter in color if out = stdout or with <> symbols
+  @param current current character
+  @param out output channel*)
+let wrap_current (curent: char) (is_color: bool) : string =
+  if is_color then
+    "\027[31m" ^ String.make 1 curent ^ "\027[0m"
+  else
+    "<" ^ String.make 1 curent ^ ">"
+
 (*transform tape info to one string
 	@param tape current tape
 	@param m current machine*)
-let string_of_tape (tape: tape) (m: machine) : string = 
+let string_of_tape (tape: tape) (m: machine) (is_color: bool): string = 
 	"[" 
 	^  string_of_char_list  (List.rev tape.left) 
-	^ "<" 
-	^ String.make 1 tape.current 
-	^ ">" 
+	^ wrap_current tape.current is_color
 	^ match string_of_char_list   tape.right with
 		| s when String.length s + (List.length tape.left)  + 1 > 20 -> s ^ "]"
 		| s -> s ^ String.make (20 - String.length s - (List.length tape.left) - 1) m.blank
@@ -74,11 +81,11 @@ let string_of_machine(m: machine) : string =
 (*transform machine info to one string
 	@param Continue info of the current step
 	@param m current machine*)
-let string_of_step (res: step_res) (m: machine) : string =
+let string_of_step (res: step_res) (m: machine)  (is_color: bool): string =
 	match res with
-		| Continue(state, tape, transition) -> string_of_tape tape m ^ " " ^ string_of_transition state transition
-		| Halted(tape) -> string_of_tape tape m
-		| Blocked(state, tape) -> string_of_tape tape m ^ "Blocked at this state " ^ state
+		| Continue(state, tape, transition) -> string_of_tape tape m is_color ^ " " ^ string_of_transition state transition
+		| Halted(tape) -> string_of_tape tape m is_color
+		| Blocked(state, tape) -> string_of_tape tape m is_color ^ "Blocked at this state " ^ state
 
 (*Transform String to tape
 	@Param str string convert*)
