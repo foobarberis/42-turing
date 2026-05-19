@@ -190,22 +190,22 @@ let () =
   run "move_left consumes left symbol" (fun () ->
     let tape = { left = ['1'; '0']; current = 'x'; right = ['y'] } in
     let expected = { left = ['0']; current = '1'; right = ['x'; 'y'] } in
-    expect_equal expected (move Left step_machine tape) "unexpected tape after move_left");
+    expect_equal expected (move Left step_machine tape ) "unexpected tape after move_left");
 
   run "move_left extends blank on empty left" (fun () ->
     let tape = { left = []; current = 'x'; right = ['y'] } in
     let expected = { left = []; current = '.'; right = ['x'; 'y'] } in
-    expect_equal expected (move Left step_machine tape) "unexpected tape after move_left at boundary");
+    expect_equal expected (move Left step_machine tape ) "unexpected tape after move_left at boundary");
 
   run "move_right consumes right symbol" (fun () ->
     let tape = { left = ['0']; current = 'x'; right = ['y'; 'z'] } in
     let expected = { left = ['x'; '0']; current = 'y'; right = ['z'] } in
-    expect_equal expected (move Right step_machine tape) "unexpected tape after move_right");
+    expect_equal expected (move Right step_machine tape ) "unexpected tape after move_right");
 
   run "move_right extends blank on empty right" (fun () ->
     let tape = { left = ['0']; current = 'x'; right = [] } in
     let expected = { left = ['x'; '0']; current = '.'; right = [] } in
-    expect_equal expected (move Right step_machine tape) "unexpected tape after move_right at boundary");
+    expect_equal expected (move Right step_machine tape ) "unexpected tape after move_right at boundary");
 
   run "move dispatches LEFT" (fun () ->
     let tape = { left = ['1']; current = 'x'; right = ['y'] } in
@@ -217,8 +217,8 @@ let () =
   run "move dispatches RIGHT" (fun () ->
     let tape = { left = ['1']; current = 'x'; right = ['y'] } in
     expect_equal
-      (move Right step_machine tape )
-      (move Right step_machine tape )
+      (move Right step_machine tape)
+      (move Right step_machine tape)
       "move RIGHT should match move_right");
 
   run "find_transition returns matching rule" (fun () ->
@@ -241,15 +241,14 @@ let () =
   run "step returns Continue for matching rule" (fun () ->
     let tape = { left = []; current = '0'; right = [] } in
     let expected_tape = { left = ['1']; current = '.'; right = [] } in
-    expect_continue "q1" expected_tape step_transition_0 (step step_machine "q0" tape) "unexpected step result");
+    expect_continue "q1" expected_tape step_transition_0 (step "q0" tape step_machine ) "unexpected step result");
 
   run "step returns Halted in final state without rule" (fun () ->
     let tape = { left = []; current = '0'; right = [] } in
-    expect_halted tape (step final_machine "HALT" tape) "unexpected step result");
-
+    expect_halted tape (step "HALT" tape final_machine ) "unexpected step result");
   run "step returns Blocked in non-final state without rule" (fun () ->
     let tape = { left = []; current = '.'; right = [] } in
-    expect_blocked "q0" tape (step blocked_machine "q0" tape) "unexpected step result");
+    expect_blocked "q0" tape (step "q0" tape blocked_machine ) "unexpected step result");
 
   run "execute halts immediately when initial is final" (fun () ->
     let tape = { left = []; current = '0'; right = [] } in

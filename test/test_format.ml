@@ -87,8 +87,8 @@ let all_chars_are ch str =
 let () =
   Printf.printf "\nformat.ml\n%!";
 
-  run "string_of_char concatenates characters" (fun () ->
-    expect_equal "abc" (string_of_char ['a'; 'b'; 'c']) "unexpected string_of_char result");
+  run "string_of_char_list concatenates characters" (fun () ->
+    expect_equal "abc" (string_of_char_list ['a'; 'b'; 'c']) "unexpected string_of_char_list result");
 
   run "string_of_header uses 80-char borders and includes the name" (fun () ->
     let lines = split_lines (string_of_header machine.name) in
