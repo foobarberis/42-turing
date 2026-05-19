@@ -55,7 +55,7 @@ let string_of_machine_transitions (states: string list) (ts: (string * transitio
   @param out output channel*)
 let wrap_current (curent: char) (is_color: bool) : string =
   if is_color then
-    "\027[31m" ^ String.make 1 curent ^ "\027[0m"
+    "\027[1;38;2;183;58;52m" ^ String.make 1 curent ^ "\027[0m"
   else
     "<" ^ String.make 1 curent ^ ">"
 
