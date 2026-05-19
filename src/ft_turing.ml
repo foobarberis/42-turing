@@ -26,17 +26,24 @@ let run jsonfile input =
   end;
   machine
 
+let run_machine m input log_enable =
+  let out = Trace.init_machine_info_file log_enable m in
+  let step_res = Execute.execute m (Format.tape_of_string input) m.initial out in 
+  Trace.step_info step_res m out;
+  Trace.close_outfile out
+ 
 let main () =
   match Array.to_list Sys.argv with
   | [_; "-h"] | [_; "--help"] ->
       print_usage stdout;
       0
+  | [_; jsonfile; input; "--logged"] | [_; jsonfile; input; "-log"] ->
+      let machine = run jsonfile input in
+      run_machine machine input true;
+      0
   | [_; jsonfile; input] ->
       let machine = run jsonfile input in
-      let out = Trace.init_machine_info_file machine in
-      let step_res = Execute.execute machine (Format.tape_of_string input) machine.initial out in 
-      Trace.step_info step_res machine out;
-      Trace.close_outfile out;
+      run_machine machine input false;
       0
   | _ ->
       print_usage stderr;
