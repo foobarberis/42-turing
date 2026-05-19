@@ -63,7 +63,7 @@ Write a program able to simulate a single-head, single-tape Turing machine from 
 
 ```text
 $ ./ft_turing --help
-usage: ft_turing [-h] jsonfile input
+usage: ft_turing [-h] [-l logfile] jsonfile input
 
 positional arguments:
   jsonfile    json description of the machine
@@ -71,6 +71,8 @@ positional arguments:
 
 optional arguments:
   -h, --help  show this help message and exit
+  -l logfile, --log logfile
+              write trace to logfile instead of stdout
 ```
 
 ### Required behavior
@@ -125,7 +127,7 @@ Finals : [ HALT ]
 [1..<->................] (eraseone, -) -> (HALT, ., LEFT)
 ```
 
-- Logging the tape state to a file instead of the terminal is also acceptable if it improves readability or clarity.
+- Logging the tape state to a file instead of the terminal is also acceptable if it improves readability or clarity. In this implementation, `-l` or `--log` writes the trace to a file.
 - If the machine becomes blocked, the program must detect it and inform the user what happened.
 
 ## V.2 Machine descriptions

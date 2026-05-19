@@ -11,17 +11,20 @@ status=0
 stdout_file=
 stderr_file=
 case_name=
+ansi_prefix=$(printf '\033[')
 
 write_usage() {
 	printf '%s\n' \
-		'usage: ft_turing [-h] jsonfile input' \
+		'usage: ft_turing [-h] [-l logfile] jsonfile input' \
 		'' \
 		'positional arguments:' \
 		'  jsonfile    json description of the machine' \
 		'  input       input of the machine' \
 		'' \
 		'optional arguments:' \
-		'  -h, --help  show this help message and exit'
+		'  -h, --help  show this help message and exit' \
+		'  -l logfile, --log logfile' \
+		'              write trace to logfile instead of stdout'
 }
 
 usage_file="$tmpdir/usage.txt"
@@ -73,6 +76,14 @@ assert_contains() {
 	grep -F -- "$needle" "$file" >/dev/null || fail_case "missing output in $file: $needle"
 }
 
+assert_not_contains() {
+	needle=$1
+	file=$2
+	if grep -F -- "$needle" "$file" >/dev/null; then
+		fail_case "unexpected output in $file: $needle"
+	fi
+}
+
 pass_case() {
 	printf '[cli] [%02d] OK %s\n' "$count" "$case_name"
 }
@@ -92,11 +103,42 @@ assert_same "$usage_file" "$stderr_file"
 pass_case
 
 rm -rf log
-run_case 'valid run is quiet and creates a log file' ./ft_turing res/unary_add.json 11+1111=
+run_case 'valid run prints a plain trace to redirected stdout' ./ft_turing res/unary_add.json 11+1111=
+assert_status 0
+assert_non_empty "$stdout_file"
+assert_empty "$stderr_file"
+assert_contains '********************************************************************************' "$stdout_file"
+assert_contains '<' "$stdout_file"
+assert_not_contains "$ansi_prefix" "$stdout_file"
+[ ! -e log ] || fail_case 'expected no log directory for stdout mode'
+pass_case
+
+log_file="$tmpdir/unary_add.log"
+run_case 'valid run with -l writes a plain trace to the chosen file' ./ft_turing -l "$log_file" res/unary_add.json 11+1111=
 assert_status 0
 assert_empty "$stdout_file"
 assert_empty "$stderr_file"
-assert_non_empty 'log/unary_add_info.log'
+assert_non_empty "$log_file"
+assert_contains '<' "$log_file"
+assert_not_contains "$ansi_prefix" "$log_file"
+pass_case
+
+run_case 'missing filename after -l prints usage to stderr' ./ft_turing -l
+assert_status 1
+assert_empty "$stdout_file"
+assert_same "$usage_file" "$stderr_file"
+pass_case
+
+run_case 'duplicate log options print usage to stderr' ./ft_turing -l "$tmpdir/one.log" --log "$tmpdir/two.log" res/unary_add.json 11+1111=
+assert_status 1
+assert_empty "$stdout_file"
+assert_same "$usage_file" "$stderr_file"
+pass_case
+
+run_case 'unknown flag prints usage to stderr' ./ft_turing --logged res/unary_add.json 11+1111=
+assert_status 1
+assert_empty "$stdout_file"
+assert_same "$usage_file" "$stderr_file"
 pass_case
 
 run_case 'missing json path returns parse error' ./ft_turing test/fixtures/parse/missing.json 101

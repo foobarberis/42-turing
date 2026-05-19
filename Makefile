@@ -17,10 +17,11 @@ BYTE_OBJ = $(addprefix $(BUILDDIR)/,$(addsuffix .cmo,$(MODULES)))
 
 SWITCH = .
 OCAML_VERSION = 5.2.1
-PACKAGES = yojson
+FIND_PACKAGES = yojson,unix
+OPAM_PACKAGES = yojson
 
 RUN = opam exec --switch=$(SWITCH) --
-PKG = -package $(PACKAGES)
+PKG = -package $(FIND_PACKAGES)
 OCAMLFLAGS = -g -I $(BUILDDIR)
 
 all: $(NAME)
@@ -31,7 +32,7 @@ setup:
 	@command -v opam >/dev/null 2>&1 || { echo "Error: opam is required"; exit 1; }
 	@opam init --disable-sandboxing --bare -y >/dev/null 2>&1 || true
 	@if [ ! -d _opam ]; then opam switch create $(SWITCH) ocaml-base-compiler.$(OCAML_VERSION) -y; fi
-	@opam install --switch=$(SWITCH) -y ocamlfind $(PACKAGES)
+	@opam install --switch=$(SWITCH) -y ocamlfind $(OPAM_PACKAGES)
 
 $(BUILDDIR):
 	@mkdir -p $(BUILDDIR)
@@ -63,7 +64,7 @@ $(NAME): $(NATIVE_OBJ)
 $(BYTE): $(BYTE_OBJ)
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -linkpkg $^ -o $@
 
-$(UNIT): $(BUILDDIR)/types.cmo $(BUILDDIR)/format.cmo $(BUILDDIR)/trace.cmo $(BUILDDIR)/parse.cmo  $(BUILDDIR)/validate.cmo $(BUILDDIR)/execute.cmo $(UNIT_OBJ)
+$(UNIT): $(BUILDDIR)/types.cmo $(BUILDDIR)/format.cmo $(BUILDDIR)/trace.cmo $(BUILDDIR)/parse.cmo $(BUILDDIR)/validate.cmo $(BUILDDIR)/execute.cmo $(UNIT_OBJ)
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -linkpkg $^ -o $@
 
 unit ut: $(UNIT)
