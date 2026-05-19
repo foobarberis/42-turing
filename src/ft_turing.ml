@@ -28,7 +28,7 @@ let run jsonfile input =
 
 let run_machine m input log_enable =
   let out = Trace.init_machine_info_file log_enable m in
-  let step_res = Execute.execute m (Format.tape_of_string input) m.initial out in 
+  let step_res = Execute.execute m (Format.tape_of_string ~blank:m.blank input) m.initial out in 
   Trace.step_info step_res m out;
   Trace.close_outfile out
  

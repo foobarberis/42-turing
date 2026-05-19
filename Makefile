@@ -7,7 +7,9 @@ BUILDDIR = _build
 UNIT = $(BUILDDIR)/test_unit.byte
 UNIT_OBJ = $(BUILDDIR)/test_parse.cmo \
 		   $(BUILDDIR)/test_validate.cmo \
-		   $(BUILDDIR)/test_exec.cmo
+		   $(BUILDDIR)/test_execute.cmo \
+		   $(BUILDDIR)/test_format.cmo \
+		   $(BUILDDIR)/test_trace.cmo
 
 MODULES = types format trace parse validate execute ft_turing
 NATIVE_OBJ = $(addprefix $(BUILDDIR)/,$(addsuffix .cmx,$(MODULES)))
@@ -49,6 +51,12 @@ $(BUILDDIR)/test_validate.cmo: test/test_validate.ml Makefile | $(BUILDDIR) setu
 $(BUILDDIR)/test_exec.cmo: test/test_exec.ml Makefile | $(BUILDDIR) setup
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -c $< -o $@
 
+$(BUILDDIR)/test_format.cmo: test/test_format.ml Makefile | $(BUILDDIR) setup
+	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -c $< -o $@
+
+$(BUILDDIR)/test_trace.cmo: test/test_trace.ml Makefile | $(BUILDDIR) setup
+	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -c $< -o $@
+
 $(NAME): $(NATIVE_OBJ)
 	$(RUN) ocamlfind ocamlopt $(OCAMLFLAGS) $(PKG) -linkpkg $^ -o $@
 
@@ -59,10 +67,13 @@ $(UNIT): $(BUILDDIR)/types.cmo $(BUILDDIR)/format.cmo $(BUILDDIR)/trace.cmo $(BU
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -linkpkg $^ -o $@
 
 unit ut: $(UNIT)
-	$(RUN) ./$(UNIT)
+	@$(RUN) ./$(UNIT)
 
-e2e: $(NAME) test/run_all.sh
-	$(RUN) ./test/run_all.sh
+e2e: $(NAME) test/test_cli.sh test/run_all.sh
+	@chmod +x test/test_cli.sh test/run_all.sh
+	@printf '\n'
+	@$(RUN) ./test/test_cli.sh
+	@$(RUN) ./test/run_all.sh
 
 test: unit e2e
 
