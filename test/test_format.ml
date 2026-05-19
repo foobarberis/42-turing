@@ -87,8 +87,8 @@ let all_chars_are ch str =
 let () =
   Printf.printf "\nformat.ml\n%!";
 
-  run "string_of_char concatenates characters" (fun () ->
-    expect_equal "abc" (string_of_char ['a'; 'b'; 'c']) "unexpected string_of_char result");
+  run "string_of_char_list concatenates characters" (fun () ->
+    expect_equal "abc" (string_of_char_list ['a'; 'b'; 'c']) "unexpected string_of_char_list result");
 
   run "string_of_header uses 80-char borders and includes the name" (fun () ->
     let lines = split_lines (string_of_header machine.name) in
@@ -127,31 +127,37 @@ let () =
   run "string_of_tape reverses left side and pads short tapes" (fun () ->
     expect_equal
       "[ab<x>cd...............]"
-      (string_of_tape short_tape machine)
+      (string_of_tape short_tape machine Plain)
       "unexpected short tape rendering");
+
+  run "string_of_tape uses ANSI color in Color mode" (fun () ->
+    expect_equal
+      "[ab\027[1;38;2;183;58;52mx\027[0mcd...............]"
+      (string_of_tape short_tape machine Color)
+      "unexpected colored tape rendering");
 
   run "string_of_tape does not pad long tapes" (fun () ->
     expect_equal
       ("[<x>" ^ String.make 25 '0' ^ "]")
-      (string_of_tape long_tape machine)
+      (string_of_tape long_tape machine Plain)
       "unexpected long tape rendering");
 
   run "string_of_step renders Continue" (fun () ->
     expect_equal
       "[ab<x>cd...............] (q0, 0) -> (q1, 1, LEFT)"
-      (string_of_step (Continue ("q0", short_tape, left_transition)) machine)
+      (string_of_step (Continue ("q0", short_tape, left_transition)) machine Plain)
       "unexpected Continue rendering");
 
   run "string_of_step renders Halted" (fun () ->
     expect_equal
       "[ab<x>cd...............]"
-      (string_of_step (Halted short_tape) machine)
+      (string_of_step (Halted short_tape) machine Plain)
       "unexpected Halted rendering");
 
   run "string_of_step renders Blocked" (fun () ->
     expect_equal
       "[ab<x>cd...............]Blocked at this state q0"
-      (string_of_step (Blocked ("q0", short_tape)) machine)
+      (string_of_step (Blocked ("q0", short_tape)) machine Plain)
       "unexpected Blocked rendering");
 
   run "tape_of_string splits non-empty input" (fun () ->

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -30,8 +30,10 @@ run_case() {
 	count=$((count + 1))
 	rm -f "$log_file"
 
-	printf './ft_turing %s "%s"\n' "$json" "$input" >> "$LOG"
-	if ./ft_turing "$json" "$input" >> "$LOG" 2>&1; then
+	cmd=(./ft_turing "$json" "$input" -l "$log_file")
+	printf '%q ' "${cmd[@]}" >> "$LOG"
+	printf '\n' >> "$LOG"
+	if "${cmd[@]}" >> "$LOG" 2>&1; then
 		status=0
 	else
 		status=$?

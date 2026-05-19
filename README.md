@@ -38,7 +38,7 @@ Build the project:
 make
 ```
 
-Run the program:
+Run the program and print the trace to stdout:
 
 ```sh
 ./ft_turing res/unary_add.json "11+1111="
@@ -96,7 +96,7 @@ Run the program:
 The test suite has three layers:
 
 - unit tests in `test/test_*.ml` for parsing, validation, execution, formatting, and trace/log writing
-- CLI tests in `test/test_cli.sh` for help, bad arguments, parse/validation errors, and a successful quiet run
+- CLI tests in `test/test_cli.sh` for help, bad arguments, stdout tracing, file logging, and parse/validation errors
 - end-to-end tests in `test/run_all.sh` that run sample machines from `res/`, plus a blocked-machine fixture, then inspect the generated logs
 
 Use `make unit` for the OCaml unit tests, `make e2e` for the shell-based CLI and end-to-end checks, or `make test` for everything.
