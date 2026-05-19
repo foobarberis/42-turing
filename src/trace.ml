@@ -28,19 +28,21 @@ let step_info (info: step_res) (machine: machine) (out: out_channel): unit =
 (*print the header info of the machine
 	@param msg string of header of the current machine
 	@param out file descriptor*)
-let header_info (out: out_channel) (m: machine): out_channel =
+let header_info (m: machine) (out: out_channel) : out_channel =
 	output_string out ((Format.string_of_header m.name) ^ "\n");
 	machine_info m out;
 	out
 
-let create_dir_if_missing path =
+(*create a directory if it doesn't exist
+  @param path the path to the directory*)
+let create_dir_if_missing (path : string): unit =
   if not (Sys.file_exists path) then
     Sys.mkdir path 0o755
 
 (*open info file and write header of the machine
 	@param m current machine
-	@return file descriptor of the *)
+	@return file descriptor*)
 let init_machine_info_file (m: machine): out_channel =
 		create_dir_if_missing "log";
 		let out = open_outfile ("log/" ^ m.name ^ "_info.log") in
-		header_info out m
+		header_info m out

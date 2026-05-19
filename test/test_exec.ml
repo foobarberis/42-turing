@@ -39,7 +39,7 @@ let trim_end_blanks str blank =
 let convert_res_to_string result (m: machine): string =
 match result with
 | Halted tape -> 
-	let str = (string_of_char (List.rev tape.left) ^ String.make 1 tape.current ^ string_of_char tape.right) in
+	let str = (string_of_char_list  (List.rev tape.left) ^ String.make 1 tape.current ^ string_of_char_list  tape.right) in
 		trim_end_blanks str m.blank 
 | _ -> ""
 
