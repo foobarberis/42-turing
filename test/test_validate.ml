@@ -4,19 +4,18 @@ open Validate
 let total = ref 0
 let failed = ref 0
 
-let fail message =
+let fail name message =
   incr failed;
-  Printf.eprintf "  FAIL: %s\n%!" message
+  Printf.eprintf "[unit] [%02d] FAIL %s\n  %s\n%!" !total name message
 
 let run name f =
   incr total;
-  Printf.printf "[%02d] %s\n%!" !total name;
   try
     f ();
-    Printf.printf "  OK\n%!"
+    Printf.printf "[unit] [%02d] OK %s\n%!" !total name
   with
-  | Failure message -> fail message
-  | exn -> fail (Printexc.to_string exn)
+  | Failure message -> fail name message
+  | exn -> fail name (Printexc.to_string exn)
 
 let expect condition message =
   if not condition then
@@ -65,7 +64,7 @@ let valid_machine =
   }
 
 let () =
-  Printf.printf "\n== Validation tests ==\n\n%!";
+  Printf.printf "\nvalidate.ml\n%!";
   run "validate_machine accepts a valid machine" (fun () ->
     validate_machine valid_machine;
     expect true "expected valid machine");
@@ -227,9 +226,7 @@ let () =
     expect_validation_error (fun () ->
       validate_input "01.0" valid_machine.alphabet valid_machine.blank));
 
-  if !failed = 0 then
-    Printf.printf "OK: %d tests\n" !total
-  else begin
-    Printf.eprintf "FAILED: %d/%d tests failed\n" !failed !total;
+  let ok = !total - !failed in
+  Printf.printf "SUMMARY: %d OK / %d FAIL\n%!" ok !failed;
+  if !failed <> 0 then
     exit 1
-  end

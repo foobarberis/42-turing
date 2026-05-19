@@ -30,8 +30,8 @@ Run the program:
 - `make` or `make all` — install required dependencies if needed, then build `ft_turing`
 - `make byte` — build the bytecode binary `ft_turing.byte`
 - `make unit` or `make ut` — build and run the unit tests
-- `make e2e` — run the end-to-end cases from `test/run_all.sh` and write the output to `test/log.txt`
-- `make test` — run both the unit tests and the end-to-end cases
+- `make e2e` — run the shell-based CLI checks and end-to-end cases from `test/test_cli.sh` and `test/run_all.sh`
+- `make test` — run the unit tests, CLI checks, and end-to-end cases
 - `make setup` — create the local `opam` switch and install required dependencies
 - `make clean` — remove the build directory `_build/`
 - `make fclean` — run `clean` and remove `ft_turing` and `ft_turing.byte`
@@ -48,8 +48,23 @@ Run the program:
 - `res/` — example machine descriptions
 - `test/test_parse.ml` — parser unit tests
 - `test/test_validate.ml` — validation unit tests
+- `test/test_execute.ml` — execution unit tests
+- `test/test_format.ml` — formatting unit tests
+- `test/test_trace.ml` — trace/logging unit tests
+- `test/test_cli.sh` — CLI checks
 - `test/fixtures/parse/` — broken JSON fixtures used by parser tests
-- `test/run_all.sh` — integration-style run script
+- `test/fixtures/e2e/` — small machine fixtures used by end-to-end tests
+- `test/run_all.sh` — end-to-end run script
+
+## Tests
+
+The test suite has three layers:
+
+- unit tests in `test/test_*.ml` for parsing, validation, execution, formatting, and trace/log writing
+- CLI tests in `test/test_cli.sh` for help, bad arguments, parse/validation errors, and a successful quiet run
+- end-to-end tests in `test/run_all.sh` that run sample machines from `res/`, plus a blocked-machine fixture, then inspect the generated logs
+
+Use `make unit` for the OCaml unit tests, `make e2e` for the shell-based CLI and end-to-end checks, or `make test` for everything.
 
 ## How a Turing machine works
 
@@ -63,8 +78,7 @@ A Turing machine has:
 The usual model assumes an unbounded tape: the machine can always move farther
 left or right, and cells outside the currently used area are blank. In a
 simulator, this is handled by growing the represented tape when needed and
-treating unseen cells as the blank symbol. That is the intended execution model
-here, even though `src/execute.ml` is still empty.
+treating unseen cells as the blank symbol.
 
 Each step reads the current symbol, finds the transition for `(state, symbol)`,
 writes a symbol, moves left or right, and switches state. In this codebase, one
