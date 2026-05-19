@@ -30,8 +30,8 @@ run_case() {
 	count=$((count + 1))
 	rm -f "$log_file"
 
-	printf './ft_turing %s "%s"\n' "$json" "$input" >> "$LOG"
-	if ./ft_turing "$json" "$input" >> "$LOG" 2>&1; then
+	printf './ft_turing %s "%s"\n' "$json" "$input" "--logged" >> "$LOG"
+	if ./ft_turing "$json" "$input" "--logged" >> "$LOG" 2>&1; then
 		status=0
 	else
 		status=$?

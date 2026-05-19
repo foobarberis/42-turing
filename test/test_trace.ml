@@ -134,7 +134,7 @@ let () =
       step_info step_result machine out;
       close_outfile out;
       expect_equal
-        (Format.string_of_step step_result machine ^ "\n")
+        (Format.string_of_step step_result machine false^ "\n")
         (read_file path)
         "unexpected step_info output"));
 

@@ -268,11 +268,12 @@ let () =
   run "execute logs each Continue step in order" (fun () ->
     let tape = { left = []; current = '0'; right = [] } in
     let expected_log =
-      Format.string_of_step (Continue ("q0", tape, step_transition_0)) step_machine
+      Format.string_of_step (Continue ("q0", tape, step_transition_0)) step_machine false
       ^ "\n"
       ^ Format.string_of_step
           (Continue ("q1", { left = ['1']; current = '.'; right = [] }, step_transition_blank))
           step_machine
+          false
       ^ "\n"
     in
     let _, log = with_temp_log (fun out ->

@@ -127,31 +127,31 @@ let () =
   run "string_of_tape reverses left side and pads short tapes" (fun () ->
     expect_equal
       "[ab<x>cd...............]"
-      (string_of_tape short_tape machine)
+      (string_of_tape short_tape machine false)
       "unexpected short tape rendering");
 
   run "string_of_tape does not pad long tapes" (fun () ->
     expect_equal
       ("[<x>" ^ String.make 25 '0' ^ "]")
-      (string_of_tape long_tape machine)
+      (string_of_tape long_tape machine false)
       "unexpected long tape rendering");
 
   run "string_of_step renders Continue" (fun () ->
     expect_equal
       "[ab<x>cd...............] (q0, 0) -> (q1, 1, LEFT)"
-      (string_of_step (Continue ("q0", short_tape, left_transition)) machine)
+      (string_of_step (Continue ("q0", short_tape, left_transition)) machine false)
       "unexpected Continue rendering");
 
   run "string_of_step renders Halted" (fun () ->
     expect_equal
       "[ab<x>cd...............]"
-      (string_of_step (Halted short_tape) machine)
+      (string_of_step (Halted short_tape) machine false)
       "unexpected Halted rendering");
 
   run "string_of_step renders Blocked" (fun () ->
     expect_equal
       "[ab<x>cd...............]Blocked at this state q0"
-      (string_of_step (Blocked ("q0", short_tape)) machine)
+      (string_of_step (Blocked ("q0", short_tape)) machine false)
       "unexpected Blocked rendering");
 
   run "tape_of_string splits non-empty input" (fun () ->

@@ -92,7 +92,7 @@ assert_same "$usage_file" "$stderr_file"
 pass_case
 
 rm -rf log
-run_case 'valid run is quiet and creates a log file' ./ft_turing res/unary_add.json 11+1111=
+run_case 'valid run is quiet and creates a log file' ./ft_turing res/unary_add.json 11+1111= --logged
 assert_status 0
 assert_empty "$stdout_file"
 assert_empty "$stderr_file"
