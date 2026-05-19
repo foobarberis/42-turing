@@ -128,15 +128,25 @@ let () =
       close_outfile out;
       expect_equal "hello\n" (read_file path) "unexpected info_message output"));
 
-  run "step_info writes the formatted step and a newline" (fun () ->
+  run "step_info writes the plain step and a newline" (fun () ->
     with_temp_file (fun path ->
       let out = open_out path in
-      step_info step_result machine out;
+      step_info step_result machine Plain out;
       close_outfile out;
       expect_equal
-        (Format.string_of_step step_result machine false^ "\n")
+        (Format.string_of_step step_result machine Plain ^ "\n")
         (read_file path)
         "unexpected step_info output"));
+
+  run "step_info uses the requested style" (fun () ->
+    with_temp_file (fun path ->
+      let out = open_out path in
+      step_info step_result machine Color out;
+      close_outfile out;
+      expect_equal
+        (Format.string_of_step step_result machine Color ^ "\n")
+        (read_file path)
+        "unexpected colored step_info output"));
 
   run "machine_info writes machine details and transitions" (fun () ->
     with_temp_file (fun path ->
@@ -151,7 +161,7 @@ let () =
   run "header_info writes the header then the machine details" (fun () ->
     with_temp_file (fun path ->
       let out = open_out path in
-      let returned = header_info  machine out in
+      let returned = header_info machine out in
       close_outfile out;
       expect (returned == out) "header_info should return the same out_channel";
       expect_equal
@@ -159,30 +169,32 @@ let () =
         (read_file path)
         "unexpected header_info output"));
 
-  run "init_machine_info_file creates the log directory and writes the header" (fun () ->
+  run "init_output creates the log directory and writes the header" (fun () ->
     with_temp_cwd (fun _ ->
       expect (not (Sys.file_exists "log")) "expected missing log directory before init";
-      let out = init_machine_info_file true machine in
+      let out, style = init_output (File "log/trace_machine_info.log") machine in
       close_outfile out;
+      expect_equal Plain style "expected file output to use Plain style";
       expect (Sys.file_exists "log") "expected log directory to be created";
       expect (Sys.file_exists "log/trace_machine_info.log") "expected log file to be created";
       expect_equal
         (Format.string_of_header machine.name ^ "\n" ^ Format.string_of_machine machine ^ "\n")
         (read_file "log/trace_machine_info.log")
-        "unexpected init_machine_info_file content"));
+        "unexpected init_output content"));
 
-  run "init_machine_info_file overwrites an existing log file" (fun () ->
+  run "init_output overwrites an existing log file" (fun () ->
     with_temp_cwd (fun _ ->
       Sys.mkdir "log" 0o755;
       let stale = open_out "log/trace_machine_info.log" in
       output_string stale "stale content\n";
       close_out stale;
-      let out = init_machine_info_file true machine in
+      let out, style = init_output (File "log/trace_machine_info.log") machine in
       close_outfile out;
+      expect_equal Plain style "expected file output to use Plain style";
       expect_equal
         (Format.string_of_header machine.name ^ "\n" ^ Format.string_of_machine machine ^ "\n")
         (read_file "log/trace_machine_info.log")
-        "expected init_machine_info_file to overwrite old content"));
+        "expected init_output to overwrite old content"));
 
   let ok = !total - !failed in
   Printf.printf "SUMMARY: %d OK / %d FAIL\n%!" ok !failed;

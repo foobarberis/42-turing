@@ -190,36 +190,22 @@ let () =
   run "move_left consumes left symbol" (fun () ->
     let tape = { left = ['1'; '0']; current = 'x'; right = ['y'] } in
     let expected = { left = ['0']; current = '1'; right = ['x'; 'y'] } in
-    expect_equal expected (move Left step_machine tape ) "unexpected tape after move_left");
+    expect_equal expected (move Left step_machine tape) "unexpected tape after move_left");
 
   run "move_left extends blank on empty left" (fun () ->
     let tape = { left = []; current = 'x'; right = ['y'] } in
     let expected = { left = []; current = '.'; right = ['x'; 'y'] } in
-    expect_equal expected (move Left step_machine tape ) "unexpected tape after move_left at boundary");
+    expect_equal expected (move Left step_machine tape) "unexpected tape after move_left at boundary");
 
   run "move_right consumes right symbol" (fun () ->
     let tape = { left = ['0']; current = 'x'; right = ['y'; 'z'] } in
     let expected = { left = ['x'; '0']; current = 'y'; right = ['z'] } in
-    expect_equal expected (move Right step_machine tape ) "unexpected tape after move_right");
+    expect_equal expected (move Right step_machine tape) "unexpected tape after move_right");
 
   run "move_right extends blank on empty right" (fun () ->
     let tape = { left = ['0']; current = 'x'; right = [] } in
     let expected = { left = ['x'; '0']; current = '.'; right = [] } in
-    expect_equal expected (move Right step_machine tape ) "unexpected tape after move_right at boundary");
-
-  run "move dispatches LEFT" (fun () ->
-    let tape = { left = ['1']; current = 'x'; right = ['y'] } in
-    expect_equal
-      (move Left step_machine tape )
-      (move Left step_machine tape )
-      "move LEFT should match move_left");
-
-  run "move dispatches RIGHT" (fun () ->
-    let tape = { left = ['1']; current = 'x'; right = ['y'] } in
-    expect_equal
-      (move Right step_machine tape)
-      (move Right step_machine tape)
-      "move RIGHT should match move_right");
+    expect_equal expected (move Right step_machine tape) "unexpected tape after move_right at boundary");
 
   run "find_transition returns matching rule" (fun () ->
     expect_equal
@@ -241,19 +227,20 @@ let () =
   run "step returns Continue for matching rule" (fun () ->
     let tape = { left = []; current = '0'; right = [] } in
     let expected_tape = { left = ['1']; current = '.'; right = [] } in
-    expect_continue "q1" expected_tape step_transition_0 (step "q0" tape step_machine ) "unexpected step result");
+    expect_continue "q1" expected_tape step_transition_0 (step "q0" tape step_machine) "unexpected step result");
 
   run "step returns Halted in final state without rule" (fun () ->
     let tape = { left = []; current = '0'; right = [] } in
-    expect_halted tape (step "HALT" tape final_machine ) "unexpected step result");
+    expect_halted tape (step "HALT" tape final_machine) "unexpected step result");
+
   run "step returns Blocked in non-final state without rule" (fun () ->
     let tape = { left = []; current = '.'; right = [] } in
-    expect_blocked "q0" tape (step "q0" tape blocked_machine ) "unexpected step result");
+    expect_blocked "q0" tape (step "q0" tape blocked_machine) "unexpected step result");
 
   run "execute halts immediately when initial is final" (fun () ->
     let tape = { left = []; current = '0'; right = [] } in
     let result = with_temp_out (fun out ->
-      execute final_machine_with_transition tape final_machine_with_transition.initial out)
+      execute final_machine_with_transition tape final_machine_with_transition.initial Plain out)
     in
     expect_halted tape result "unexpected execute result");
 
@@ -261,30 +248,30 @@ let () =
     let tape = { left = []; current = '0'; right = [] } in
     let expected_tape = { left = []; current = '1'; right = ['.'] } in
     let result = with_temp_out (fun out ->
-      execute step_machine tape step_machine.initial out)
+      execute step_machine tape step_machine.initial Plain out)
     in
     expect_halted expected_tape result "unexpected execute result");
 
   run "execute logs each Continue step in order" (fun () ->
     let tape = { left = []; current = '0'; right = [] } in
     let expected_log =
-      Format.string_of_step (Continue ("q0", tape, step_transition_0)) step_machine false
+      Format.string_of_step (Continue ("q0", tape, step_transition_0)) step_machine Plain
       ^ "\n"
       ^ Format.string_of_step
           (Continue ("q1", { left = ['1']; current = '.'; right = [] }, step_transition_blank))
           step_machine
-          false
+          Plain
       ^ "\n"
     in
     let _, log = with_temp_log (fun out ->
-      execute step_machine tape step_machine.initial out)
+      execute step_machine tape step_machine.initial Plain out)
     in
     expect_equal expected_log log "unexpected execute trace");
 
   run "execute returns Blocked when machine gets stuck" (fun () ->
     let tape = { left = []; current = '.'; right = [] } in
     let result = with_temp_out (fun out ->
-      execute blocked_machine tape blocked_machine.initial out)
+      execute blocked_machine tape blocked_machine.initial Plain out)
     in
     expect_blocked "q0" tape result "unexpected execute result");
 
