@@ -190,35 +190,35 @@ let () =
   run "move_left consumes left symbol" (fun () ->
     let tape = { left = ['1'; '0']; current = 'x'; right = ['y'] } in
     let expected = { left = ['0']; current = '1'; right = ['x'; 'y'] } in
-    expect_equal expected (move_left tape step_machine) "unexpected tape after move_left");
+    expect_equal expected (move Left step_machine tape) "unexpected tape after move_left");
 
   run "move_left extends blank on empty left" (fun () ->
     let tape = { left = []; current = 'x'; right = ['y'] } in
     let expected = { left = []; current = '.'; right = ['x'; 'y'] } in
-    expect_equal expected (move_left tape step_machine) "unexpected tape after move_left at boundary");
+    expect_equal expected (move Left step_machine tape) "unexpected tape after move_left at boundary");
 
   run "move_right consumes right symbol" (fun () ->
     let tape = { left = ['0']; current = 'x'; right = ['y'; 'z'] } in
     let expected = { left = ['x'; '0']; current = 'y'; right = ['z'] } in
-    expect_equal expected (move_right tape step_machine) "unexpected tape after move_right");
+    expect_equal expected (move Right step_machine tape) "unexpected tape after move_right");
 
   run "move_right extends blank on empty right" (fun () ->
     let tape = { left = ['0']; current = 'x'; right = [] } in
     let expected = { left = ['x'; '0']; current = '.'; right = [] } in
-    expect_equal expected (move_right tape step_machine) "unexpected tape after move_right at boundary");
+    expect_equal expected (move Right step_machine tape) "unexpected tape after move_right at boundary");
 
   run "move dispatches LEFT" (fun () ->
     let tape = { left = ['1']; current = 'x'; right = ['y'] } in
     expect_equal
-      (move_left tape step_machine)
-      (move Left tape step_machine)
+      (move Left step_machine tape )
+      (move Left step_machine tape )
       "move LEFT should match move_left");
 
   run "move dispatches RIGHT" (fun () ->
     let tape = { left = ['1']; current = 'x'; right = ['y'] } in
     expect_equal
-      (move_right tape step_machine)
-      (move Right tape step_machine)
+      (move Right step_machine tape )
+      (move Right step_machine tape )
       "move RIGHT should match move_right");
 
   run "find_transition returns matching rule" (fun () ->

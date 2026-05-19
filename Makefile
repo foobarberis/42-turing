@@ -48,7 +48,7 @@ $(BUILDDIR)/test_parse.cmo: test/test_parse.ml Makefile | $(BUILDDIR) setup
 $(BUILDDIR)/test_validate.cmo: test/test_validate.ml Makefile | $(BUILDDIR) setup
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -c $< -o $@
 
-$(BUILDDIR)/test_exec.cmo: test/test_exec.ml Makefile | $(BUILDDIR) setup
+$(BUILDDIR)/test_execute.cmo: test/test_execute.ml Makefile | $(BUILDDIR) setup
 	$(RUN) ocamlfind ocamlc $(OCAMLFLAGS) $(PKG) -c $< -o $@
 
 $(BUILDDIR)/test_format.cmo: test/test_format.ml Makefile | $(BUILDDIR) setup
