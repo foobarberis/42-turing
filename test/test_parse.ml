@@ -141,6 +141,14 @@ let () =
     expect_parse_error (fun () ->
       load_machine "test/fixtures/parse/bad_transitions_type.json"));
 
+  run "load_machine rejects missing top-level blank field" (fun () ->
+    expect_parse_error (fun () ->
+      load_machine "test/fixtures/parse/missing_blank.json"));
+
+  run "load_machine rejects missing top-level states field" (fun () ->
+    expect_parse_error (fun () ->
+      load_machine "test/fixtures/parse/missing_states.json"));
+
   run "load_machine parses unary_add" (fun () ->
     let machine = load_machine "res/unary_add.json" in
     let state_a = transitions_for "A" machine in

@@ -53,6 +53,17 @@ let right_transition =
     action = Right;
   }
 
+let machine_with_transitions =
+  {
+    machine with
+    transitions =
+      [
+        ("q1", [right_transition]);
+        ("HALT", []);
+        ("q0", [left_transition]);
+      ];
+  }
+
 let short_tape =
   {
     left = ['b'; 'a'];
@@ -99,6 +110,19 @@ let () =
       "(q1, 1) -> (HALT, 0, RIGHT)"
       (string_of_transition "q1" right_transition)
       "unexpected RIGHT transition rendering");
+
+  run "string_of_machine renders header and transitions in state order" (fun () ->
+    let expected =
+      "Alphabet: [0; 1; .]\n"
+      ^ "Blank: .\n"
+      ^ "States: [q0; q1; HALT]\n"
+      ^ "Initial: q0\n"
+      ^ "Finals: [HALT]\n"
+      ^ "(q0, 0) -> (q1, 1, LEFT)\n"
+      ^ "(q1, 1) -> (HALT, 0, RIGHT)\n"
+      ^ border
+    in
+    expect_equal expected (string_of_machine machine_with_transitions) "unexpected string_of_machine rendering");
 
   run "string_of_tape reverses left side and pads short tapes" (fun () ->
     expect_equal

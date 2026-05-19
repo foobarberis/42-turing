@@ -53,6 +53,17 @@ let expect_continue expected_state expected_tape expected_transition result mess
   | Halted _ ->
       failwith (message ^ ": expected Continue, got Halted")
 
+let read_file path =
+  let ic = open_in_bin path in
+  try
+    let len = in_channel_length ic in
+    let content = really_input_string ic len in
+    close_in ic;
+    content
+  with exn ->
+    close_in_noerr ic;
+    raise exn
+
 let with_temp_out f =
   let path = Filename.temp_file "ft_turing_execute" ".log" in
   let out = open_out path in
@@ -61,6 +72,20 @@ let with_temp_out f =
     close_out out;
     Sys.remove path;
     result
+  with exn ->
+    close_out_noerr out;
+    (try Sys.remove path with Sys_error _ -> ());
+    raise exn
+
+let with_temp_log f =
+  let path = Filename.temp_file "ft_turing_execute" ".log" in
+  let out = open_out path in
+  try
+    let result = f out in
+    close_out out;
+    let content = read_file path in
+    Sys.remove path;
+    (result, content)
   with exn ->
     close_out_noerr out;
     (try Sys.remove path with Sys_error _ -> ());
@@ -240,6 +265,21 @@ let () =
       execute step_machine tape step_machine.initial out)
     in
     expect_halted expected_tape result "unexpected execute result");
+
+  run "execute logs each Continue step in order" (fun () ->
+    let tape = { left = []; current = '0'; right = [] } in
+    let expected_log =
+      Format.string_of_step (Continue ("q0", tape, step_transition_0)) step_machine
+      ^ "\n"
+      ^ Format.string_of_step
+          (Continue ("q1", { left = ['1']; current = '.'; right = [] }, step_transition_blank))
+          step_machine
+      ^ "\n"
+    in
+    let _, log = with_temp_log (fun out ->
+      execute step_machine tape step_machine.initial out)
+    in
+    expect_equal expected_log log "unexpected execute trace");
 
   run "execute returns Blocked when machine gets stuck" (fun () ->
     let tape = { left = []; current = '.'; right = [] } in

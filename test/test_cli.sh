@@ -56,6 +56,11 @@ assert_empty() {
 	[ ! -s "$file" ] || fail_case "expected empty file: $file"
 }
 
+assert_non_empty() {
+	file=$1
+	[ -s "$file" ] || fail_case "expected non-empty file: $file"
+}
+
 assert_same() {
 	expected=$1
 	actual=$2
@@ -84,6 +89,14 @@ run_case 'wrong arg count prints usage to stderr' ./ft_turing
 assert_status 1
 assert_empty "$stdout_file"
 assert_same "$usage_file" "$stderr_file"
+pass_case
+
+rm -rf log
+run_case 'valid run is quiet and creates a log file' ./ft_turing res/unary_add.json 11+1111=
+assert_status 0
+assert_empty "$stdout_file"
+assert_empty "$stderr_file"
+assert_non_empty 'log/unary_add_info.log'
 pass_case
 
 run_case 'missing json path returns parse error' ./ft_turing test/fixtures/parse/missing.json 101

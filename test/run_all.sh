@@ -89,6 +89,13 @@ assert_trace_case() {
 	assert_final_contains "$2"
 }
 
+assert_blocked_case() {
+	assert_status 0
+	assert_log_created
+	load_trace_tail
+	assert_final_contains "$1"
+}
+
 pass_case() {
 	printf 'OK\n\n' >> "$LOG"
 	printf '[e2e] [%02d] OK %s\n' "$count" "$case_name"
@@ -96,8 +103,16 @@ pass_case() {
 
 printf 'e2e\n'
 
+run_case 'blocked machine reports the blocked state' 'test/fixtures/e2e/blocked.json' '0' 'log/blocked_info.log'
+assert_blocked_case 'Blocked at this state q0'
+pass_case
+
 run_case '02n accepts empty input' 'res/02n.json' '' 'log/02n_info.log'
 assert_trace_case '-> (HALT, y, LEFT)' '<.>y'
+pass_case
+
+run_case '02n accepts 00' 'res/02n.json' '00' 'log/02n_info.log'
+assert_trace_case '(init, .) -> (HALT, y, LEFT)' '[0<0>y'
 pass_case
 
 run_case '02n rejects odd zero count' 'res/02n.json' '0' 'log/02n_info.log'
@@ -120,8 +135,16 @@ run_case '0n1n rejects 00011' 'res/0n1n.json' '00011' 'log/0n1n_info.log'
 assert_trace_case '-> (HALT, n, LEFT)' '<->n'
 pass_case
 
+run_case '0n1n rejects wrong-order input 001011' 'res/0n1n.json' '001011' 'log/0n1n_info.log'
+assert_trace_case '(deny, y) -> (HALT, n, LEFT)' '.--10-<->n'
+pass_case
+
 run_case 'is_palindrome accepts empty input' 'res/is_palindrome.json' '' 'log/is_palindrome_info.log'
 assert_trace_case '-> (HALT, y, LEFT)' '<.>y'
+pass_case
+
+run_case 'is_palindrome accepts 0110' 'res/is_palindrome.json' '0110' 'log/is_palindrome_info.log'
+assert_trace_case '(init, y) -> (HALT, y, LEFT)' '.---<->y'
 pass_case
 
 run_case 'is_palindrome accepts 1000000001' 'res/is_palindrome.json' '1000000001' 'log/is_palindrome_info.log'
@@ -130,6 +153,10 @@ pass_case
 
 run_case 'is_palindrome rejects 10010' 'res/is_palindrome.json' '10010' 'log/is_palindrome_info.log'
 assert_trace_case '-> (HALT, n, LEFT)' '<0>n'
+pass_case
+
+run_case 'unary_add accepts += as empty operands' 'res/unary_add.json' '+=' 'log/unary_add_info.log'
+assert_trace_case '(B, +) -> (E, ., LEFT)' '[<.>'
 pass_case
 
 run_case 'unary_add computes 11+1111= to 111111' 'res/unary_add.json' '11+1111=' 'log/unary_add_info.log'
