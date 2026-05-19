@@ -162,7 +162,7 @@ let () =
   run "init_machine_info_file creates the log directory and writes the header" (fun () ->
     with_temp_cwd (fun _ ->
       expect (not (Sys.file_exists "log")) "expected missing log directory before init";
-      let out = init_machine_info_file false machine  in
+      let out = init_machine_info_file true machine in
       close_outfile out;
       expect (Sys.file_exists "log") "expected log directory to be created";
       expect (Sys.file_exists "log/trace_machine_info.log") "expected log file to be created";
@@ -177,7 +177,7 @@ let () =
       let stale = open_out "log/trace_machine_info.log" in
       output_string stale "stale content\n";
       close_out stale;
-      let out = init_machine_info_file false machine in
+      let out = init_machine_info_file true machine in
       close_outfile out;
       expect_equal
         (Format.string_of_header machine.name ^ "\n" ^ Format.string_of_machine machine ^ "\n")

@@ -60,8 +60,10 @@ let step (state: string) (tape: tape) (m: machine): step_res =
 	@param tape current tape
 	@param state actual state of the machine
 	@param out file descriptor for logging*)
-let rec execute (m: machine) (tape: tape) (state: string) (out: out_channel): step_res  =
-	match step state tape m with
+let rec execute (m: machine) (tape: tape) (state: string) (out: out_channel): step_res =
+  if List.mem state m.finals then
+		Halted(tape) 
+	else match step state tape m with
 	| Continue(new_state, new_tape, transition) -> Trace.step_info (Continue(state, tape, transition)) m out;
 		execute m new_tape new_state out
 	| Blocked(new_state, new_tape) -> Blocked(new_state, new_tape)
