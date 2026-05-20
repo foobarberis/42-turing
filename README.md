@@ -44,13 +44,19 @@ Run the program and print the trace to stdout:
 ./ft_turing res/unary_add.json "11+1111="
 ```
 
+If the machine input itself starts with `-`, end option parsing first:
+
+```sh
+./ft_turing machine.json -- '-'
+```
+
 ### Runtime output
 
-- Successful runs write a trace file to `log/<machine>_info.log`.
-- A successful simulator run exits with status `0`.
-- CLI errors, parse errors, validation errors, and system errors exit with status `1`.
-- If the machine becomes blocked, that blocked state is reported in the final line of the log file.
-- On success, the program is otherwise quiet on `stdout` and `stderr`.
+- By default, the full trace is written to `stdout`.
+- `-l` / `--log` writes the trace to the requested file instead of `stdout`.
+- A halted or blocked machine exits with status `0`.
+- If the machine becomes blocked, that blocked state is reported in the final line of the trace output.
+- CLI errors, parse errors, validation errors, and system errors are written to `stderr` and exit with status `1`.
 
 ### Make targets
 
@@ -89,7 +95,7 @@ Run the program and print the trace to stdout:
 - `test/fixtures/parse/` — broken JSON fixtures used by parser tests
 - `test/fixtures/validate/` — invalid machine fixtures used by validation/CLI tests
 - `test/fixtures/e2e/` — small machine fixtures used by end-to-end tests
-- `log/` — generated execution logs
+- `log/` — generated execution logs when `-l` / `--log` is used
 
 ### Tests
 
@@ -151,25 +157,32 @@ machines, not as the smallest possible constructions.
   - `res/is_palindrome.json` expects a binary word
   - `res/unary_add.json` expects `1*+1*=`
   - `res/utm.json` expects an encoded unary-add machine followed by an encoded input
+- All bundled machines except `res/utm.json` start with a validation prefix that enforces that narrower external syntax.
+  Malformed external input is sent to a dedicated non-final state named `INVALID_INPUT`, so the simulator reports a blocked machine without adding machine-specific OCaml code.
 - State names such as `get_last_one`, `get_most_left`, and `deny` were chosen on purpose.
   They describe the current phase of the algorithm, which makes the machines much easier to audit.
 
-### Inputs intentionally not supported
+### External input validation
 
-The simulator only validates that input symbols belong to the machine alphabet and that the blank symbol is not typed directly. It does not enforce a custom grammar for each sample machine.
+The simulator itself still performs only the generic host-side input checks:
 
-Because of that, some strings are intentionally outside the supported input domain even if they use only allowed symbols:
+- every input symbol must belong to the machine alphabet
+- the blank symbol must not be typed directly
 
-- `res/02n.json` is only intended for words made of `0`s. Inputs containing `y` or `n` are not meant to be user data.
-- `res/0n1n.json` and `res/is_palindrome.json` are only intended for binary words over `0` and `1`. Inputs containing `-`, `y`, or `n` are not supported as external inputs because those symbols are reserved for work/output on the tape.
-- `res/unary_add.json` is only intended for inputs of the form `1*+1*=`. Inputs such as `1+11+111=`, `111`, or `1=+1` are intentionally not supported, even though some of them still pass the generic alphabet check.
-- `res/utm.json` does not support raw JSON machine descriptions as runtime input, and it is not a fully generic universal machine for arbitrary encodings. It supports the documented flat encoding used here for the unary-add machine family.
+The bundled machine descriptions add their own stricter validation when needed:
+
+- `res/02n.json` accepts only `0*`. Inputs containing `y` or `n` block in `INVALID_INPUT`.
+- `res/0n1n.json` and `res/is_palindrome.json` accept only binary words over `0` and `1`. Inputs containing `-`, `y`, or `n` block in `INVALID_INPUT`.
+- `res/unary_add.json` accepts only words of the form `1*+1*=`. Inputs such as `1+11+111=`, `111`, or `1=+1` block in `INVALID_INPUT`.
+- `res/utm.json` remains the exception for now: host-side validation of its encoded runtime input is still deferred.
 
 ### `res/02n.json`
 
 Goal: decide whether the input is in `0^(2n)`.
 
 This means the word must contain only `0`s, and their total count must be even: `""`, `00`, `0000`, `000000`, and so on.
+
+Before the parity check starts, the machine validates that the external input contains only `0`s. Inputs containing `y` or `n` block in `INVALID_INPUT`.
 
 This is the simplest machine in the folder. It only needs to remember one thing:
 `have I seen an even number of 0s so far, or an odd number?`
@@ -190,6 +203,8 @@ The empty word is accepted because it is `0^(2*0)`.
 Goal: decide whether the input is in `0^n1^n`.
 
 This means the word must be made of some number of `0`s followed immediately by exactly the same number of `1`s: `""`, `01`, `0011`, `000111`, and so on.
+
+Before that language check starts, the machine validates that the external input is a binary word. Inputs containing `-`, `y`, or `n` block in `INVALID_INPUT`.
 
 Idea: repeatedly remove one `0` from the left part and one matching `1` from the right part.
 Matched symbols are replaced with `-`.
@@ -226,6 +241,8 @@ If a `0` cannot find a matching `1`, or if a `1` appears before all `0`s are con
 
 Goal: decide whether a binary word reads the same from left to right and from right to left.
 
+Before the palindrome check starts, the machine validates that the external input is a binary word. Inputs containing `-`, `y`, or `n` block in `INVALID_INPUT`.
+
 Idea: compare the outside symbols first, then move inward.
 Matched symbols are replaced with `-`.
 
@@ -261,6 +278,8 @@ Example:
 ```
 
 The result should be six `1`s on the tape.
+
+Before the addition starts, the machine validates the full external shape `1*+1*=`. Malformed inputs block in `INVALID_INPUT`.
 
 This machine does not need an extra marker symbol. It only has to remove the
 separators while preserving the number of `1`s.
