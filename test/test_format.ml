@@ -156,7 +156,7 @@ let () =
 
   run "string_of_step renders Blocked" (fun () ->
     expect_equal
-      "[ab<x>cd...............]Blocked at this state q0"
+      "[ab<x>cd...............] Blocked at this state q0"
       (string_of_step (Blocked ("q0", short_tape)) machine Plain)
       "unexpected Blocked rendering");
 
