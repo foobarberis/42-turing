@@ -1,22 +1,35 @@
 {
-	"name"    : "02n",
-	"alphabet": [ "0", "y", "n", "."],
-	"blank"   : ".",
-	"states"  : [
+	"name": "02n",
+	"alphabet": ["0", "y", "n", "."],
+	"blank": ".",
+	"states": [
+		"V_SCAN",
+		"V_REWIND",
+		"INVALID_INPUT",
 		"init",
 		"get_pair_zero",
 		"HALT"
 	],
-	"initial" : "init",
-	"finals"  : [ "HALT"],
-	"transitions" : {
+	"initial": "V_SCAN",
+	"finals": ["HALT"],
+	"transitions": {
+		"V_SCAN": [
+			{ "read": "0", "to_state": "V_SCAN", "write": "0", "action": "RIGHT" },
+			{ "read": "y", "to_state": "INVALID_INPUT", "write": "y", "action": "RIGHT" },
+			{ "read": "n", "to_state": "INVALID_INPUT", "write": "n", "action": "RIGHT" },
+			{ "read": ".", "to_state": "V_REWIND", "write": ".", "action": "LEFT" }
+		],
+		"V_REWIND": [
+			{ "read": "0", "to_state": "V_REWIND", "write": "0", "action": "LEFT" },
+			{ "read": ".", "to_state": "init", "write": ".", "action": "RIGHT" }
+		],
 		"init": [
-			{ "read" : ".", "to_state": "HALT", "write": "y", "action": "LEFT"},
-			{ "read" : "0", "to_state": "get_pair_zero", "write": "0", "action": "RIGHT"}
+			{ "read": ".", "to_state": "HALT", "write": "y", "action": "LEFT" },
+			{ "read": "0", "to_state": "get_pair_zero", "write": "0", "action": "RIGHT" }
 		],
 		"get_pair_zero": [
-			{ "read" : ".", "to_state": "HALT", "write": "n", "action": "LEFT"},
-			{ "read" : "0", "to_state": "init", "write": "0", "action": "RIGHT"}
+			{ "read": ".", "to_state": "HALT", "write": "n", "action": "LEFT" },
+			{ "read": "0", "to_state": "init", "write": "0", "action": "RIGHT" }
 		]
 	}
 }

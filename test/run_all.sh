@@ -114,7 +114,7 @@ assert_trace_case '-> (HALT, y, LEFT)' '<.>y'
 pass_case
 
 run_case '02n accepts 00' 'res/02n.json' '00' 'log/02n_info.log'
-assert_trace_case '(init, .) -> (HALT, y, LEFT)' '[0<0>y'
+assert_trace_case '(init, .) -> (HALT, y, LEFT)' '<0>y'
 pass_case
 
 run_case '02n rejects odd zero count' 'res/02n.json' '0' 'log/02n_info.log'
@@ -125,12 +125,36 @@ run_case '02n accepts 0000' 'res/02n.json' '0000' 'log/02n_info.log'
 assert_trace_case '-> (HALT, y, LEFT)' '<0>y'
 pass_case
 
+run_case '02n accepts 000 as valid syntax and rejects it semantically' 'res/02n.json' '000' 'log/02n_info.log'
+assert_trace_case '-> (HALT, n, LEFT)' '<0>n'
+pass_case
+
+run_case '02n rejects y as malformed external input' 'res/02n.json' 'y' 'log/02n_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
+run_case '02n rejects n as malformed external input' 'res/02n.json' 'n' 'log/02n_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
 run_case '0n1n accepts empty input' 'res/0n1n.json' '' 'log/0n1n_info.log'
 assert_trace_case '-> (HALT, y, LEFT)' '<.>y'
 pass_case
 
+run_case '0n1n accepts 01' 'res/0n1n.json' '01' 'log/0n1n_info.log'
+assert_trace_case '-> (HALT, y, LEFT)' '<->y'
+pass_case
+
 run_case '0n1n accepts 000111' 'res/0n1n.json' '000111' 'log/0n1n_info.log'
 assert_trace_case '-> (HALT, y, LEFT)' '<->y'
+pass_case
+
+run_case '0n1n rejects 0 as valid syntax but invalid language member' 'res/0n1n.json' '0' 'log/0n1n_info.log'
+assert_trace_case '-> (HALT, n, LEFT)' '<->n'
+pass_case
+
+run_case '0n1n rejects 10 as valid syntax but invalid language member' 'res/0n1n.json' '10' 'log/0n1n_info.log'
+assert_trace_case '-> (HALT, n, LEFT)' '<0>n'
 pass_case
 
 run_case '0n1n rejects 00011' 'res/0n1n.json' '00011' 'log/0n1n_info.log'
@@ -141,6 +165,18 @@ run_case '0n1n rejects wrong-order input 001011' 'res/0n1n.json' '001011' 'log/0
 assert_trace_case '(deny, y) -> (HALT, n, LEFT)' '.--10-<->n'
 pass_case
 
+run_case '0n1n rejects y as malformed external input' 'res/0n1n.json' 'y' 'log/0n1n_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
+run_case '0n1n rejects n as malformed external input' 'res/0n1n.json' 'n' 'log/0n1n_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
+run_case '0n1n rejects - as malformed external input' 'res/0n1n.json' '-' 'log/0n1n_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
 run_case 'is_palindrome accepts empty input' 'res/is_palindrome.json' '' 'log/is_palindrome_info.log'
 assert_trace_case '-> (HALT, y, LEFT)' '<.>y'
 pass_case
@@ -149,12 +185,32 @@ run_case 'is_palindrome accepts 0110' 'res/is_palindrome.json' '0110' 'log/is_pa
 assert_trace_case '(init, y) -> (HALT, y, LEFT)' '.---<->y'
 pass_case
 
+run_case 'is_palindrome accepts 010' 'res/is_palindrome.json' '010' 'log/is_palindrome_info.log'
+assert_trace_case '(is_one, .) -> (HALT, ., LEFT)' '---y'
+pass_case
+
 run_case 'is_palindrome accepts 1000000001' 'res/is_palindrome.json' '1000000001' 'log/is_palindrome_info.log'
 assert_trace_case '-> (HALT, y, LEFT)' '<->y'
 pass_case
 
+run_case 'is_palindrome rejects 01' 'res/is_palindrome.json' '01' 'log/is_palindrome_info.log'
+assert_trace_case '(deny, y) -> (HALT, n, LEFT)' '<1>n'
+pass_case
+
 run_case 'is_palindrome rejects 10010' 'res/is_palindrome.json' '10010' 'log/is_palindrome_info.log'
 assert_trace_case '-> (HALT, n, LEFT)' '<0>n'
+pass_case
+
+run_case 'is_palindrome rejects y as malformed external input' 'res/is_palindrome.json' 'y' 'log/is_palindrome_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
+run_case 'is_palindrome rejects n as malformed external input' 'res/is_palindrome.json' 'n' 'log/is_palindrome_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
+run_case 'is_palindrome rejects - as malformed external input' 'res/is_palindrome.json' '-' 'log/is_palindrome_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
 pass_case
 
 run_case 'unary_add accepts += as empty operands' 'res/unary_add.json' '+=' 'log/unary_add_info.log'
