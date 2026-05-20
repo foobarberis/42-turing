@@ -7,6 +7,8 @@ LOG="test/log.txt"
 : > "$LOG"
 rm -rf log
 
+utm_prefix='1.+=|.|LRTWXABCDE|L|E|L1L1RL+R+RL=X=RL.X.RR1R1RR+X+RR=T=RR.X.RT1X1RT+X+RT=X=RT.W.LW1W1LW+W+LW=W=LW.A.RA.A.RA1A1RA+A+RA=B.LB1C=LB+E.LC1C1LC+D1RD1D1RD=E.R|_'
+
 count=0
 status=0
 case_name=
@@ -230,27 +232,35 @@ assert_trace_case '-> (E, ., RIGHT)' '111111.<.>'
 pass_case
 
 run_case 'unary_add rejects 111 as malformed external input' 'res/unary_add.json' '111' 'log/unary_add_info.log'
-assert_blocked_case 'Blocked at this state INVALID_INPUT'
+assert_blocked_case 'Blocked at this state X'
 pass_case
 
 run_case 'unary_add rejects 1+11+111= as malformed external input' 'res/unary_add.json' '1+11+111=' 'log/unary_add_info.log'
-assert_blocked_case 'Blocked at this state INVALID_INPUT'
+assert_blocked_case 'Blocked at this state X'
 pass_case
 
 run_case 'unary_add rejects 1=+1 as malformed external input' 'res/unary_add.json' '1=+1' 'log/unary_add_info.log'
-assert_blocked_case 'Blocked at this state INVALID_INPUT'
+assert_blocked_case 'Blocked at this state X'
 pass_case
 
 run_case 'unary_add rejects =+ as malformed external input' 'res/unary_add.json' '=+' 'log/unary_add_info.log'
-assert_blocked_case 'Blocked at this state INVALID_INPUT'
+assert_blocked_case 'Blocked at this state X'
 pass_case
 
 run_case 'unary_add rejects 11+=1 as malformed external input' 'res/unary_add.json' '11+=1' 'log/unary_add_info.log'
-assert_blocked_case 'Blocked at this state INVALID_INPUT'
+assert_blocked_case 'Blocked at this state X'
 pass_case
 
-run_case 'utm runs encoded unary_add and yields 111111' 'res/utm.json' '1.+=|.|ABCDE|A|E|A.A.RA1A1RA+A+RA=B.LB1C=LB+E.LC1C1LC+D1RD1D1RD=E.R|_11+1111=' 'log/utm_info.log'
-assert_trace_case '-> (HALT, E, RIGHT)' '|111111._.]'
+run_case 'utm runs the canonical encoded unary_add and yields 111111' 'res/utm.json' "${utm_prefix}11+1111=" 'log/utm_info.log'
+assert_trace_case '-> (uE, ., RIGHT)' '|.111111.<.>'
+pass_case
+
+run_case 'utm rejects a non-canonical machine prefix' 'res/utm.json' '1.+=|.|LRTWXABCDE|R|E|L1L1RL+R+RL=X=RL.X.RR1R1RR+X+RR=T=RR.X.RT1X1RT+X+RT=X=RT.W.LW1W1LW+W+LW=W=LW.A.RA.A.RA1A1RA+A+RA=B.LB1C=LB+E.LC1C1LC+D1RD1D1RD=E.R|_11+1111=' 'log/utm_info.log'
+assert_blocked_case 'Blocked at this state bad'
+pass_case
+
+run_case 'utm rejects a malformed unary_add payload after a valid prefix' 'res/utm.json' "${utm_prefix}1A=" 'log/utm_info.log'
+assert_blocked_case 'Blocked at this state uX'
 pass_case
 
 printf 'SUMMARY: %d OK / 0 FAIL\n' "$count"

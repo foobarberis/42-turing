@@ -139,12 +139,14 @@ the current `(state, symbol)` pair.
 
 ## Machines in `res/`
 
-The five JSON files in `res/` are intentionally written as readable, phase-based
-machines, not as the smallest possible constructions.
+The five JSON files in `res/` are written as readable, phase-based machines.
+`res/utm.json` is a small, reviewable machine specialized to one canonical
+encoded unary-add machine.
 
 ### Common choices used by all sample machines
 
-- `.` is the blank symbol everywhere.
+- `res/02n.json`, `res/0n1n.json`, `res/is_palindrome.json`, and `res/unary_add.json` use `.` as their blank symbol.
+- `res/utm.json` uses `~` as its real blank symbol so the encoded unary-add blank `.` can appear literally inside its input tape.
 - The project format has one `alphabet` field. It does not separate:
   - the symbols the user is supposed to type
   - the extra symbols the machine needs for work or output
@@ -156,25 +158,31 @@ machines, not as the smallest possible constructions.
   - `res/0n1n.json` expects a binary word
   - `res/is_palindrome.json` expects a binary word
   - `res/unary_add.json` expects `1*+1*=`
-  - `res/utm.json` expects an encoded unary-add machine followed by an encoded input
-- All bundled machines except `res/utm.json` start with a validation prefix that enforces that narrower external syntax.
-  Malformed external input is sent to a dedicated non-final state named `INVALID_INPUT`, so the simulator reports a blocked machine without adding machine-specific OCaml code.
-- State names such as `get_last_one`, `get_most_left`, and `deny` were chosen on purpose.
-  They describe the current phase of the algorithm, which makes the machines much easier to audit.
+  - `res/utm.json` expects one exact canonical encoding of `res/unary_add.json` followed by a unary-add payload
+- All bundled machines enforce that narrower syntax inside the machine itself:
+  - `res/02n.json`, `res/0n1n.json`, and `res/is_palindrome.json` block in `INVALID_INPUT`
+  - `res/unary_add.json` blocks in `X`
+  - `res/utm.json` blocks in `bad` for a malformed encoded prefix and in `uX` for a malformed unary-add payload
+- State names such as `get_last_one`, `get_most_left`, and `deny` were chosen for readability.
+  `res/unary_add.json` is the exception: its states were shortened on purpose so its canonical encoded prefix stays short.
 
 ### External input validation
 
-The simulator itself still performs only the generic host-side input checks:
+The simulator performs only the generic host-side input checks:
 
 - every input symbol must belong to the machine alphabet
 - the blank symbol must not be typed directly
 
-The bundled machine descriptions add their own stricter validation when needed:
+The bundled machines add stricter validation in their transition tables when needed:
 
 - `res/02n.json` accepts only `0*`. Inputs containing `y` or `n` block in `INVALID_INPUT`.
 - `res/0n1n.json` and `res/is_palindrome.json` accept only binary words over `0` and `1`. Inputs containing `-`, `y`, or `n` block in `INVALID_INPUT`.
-- `res/unary_add.json` accepts only words of the form `1*+1*=`. Inputs such as `1+11+111=`, `111`, or `1=+1` block in `INVALID_INPUT`.
-- `res/utm.json` remains the exception for now: host-side validation of its encoded runtime input is still deferred.
+- `res/unary_add.json` accepts only words of the form `1*+1*=`. Inputs such as `1+11+111=`, `111`, or `1=+1` block in `X`.
+- `res/utm.json` accepts only:
+  - the exact canonical unary-add machine prefix described below
+  - followed by a payload that passes the unary-add validation phase
+
+For `res/utm.json`, the host-side validator only checks the wide encoded alphabet of the wrapper machine. The machine itself is responsible for rejecting non-canonical prefixes and payload symbols such as `A` that are legal in the wrapper alphabet but illegal in unary-add data.
 
 ### `res/02n.json`
 
@@ -279,20 +287,49 @@ Example:
 
 The result should be six `1`s on the tape.
 
-Before the addition starts, the machine validates the full external shape `1*+1*=`. Malformed inputs block in `INVALID_INPUT`.
+Before the addition starts, the machine validates the full external shape `1*+1*=`. Malformed inputs block in `X`.
 
-This machine does not need an extra marker symbol. It only has to remove the
-separators while preserving the number of `1`s.
+The unary-add machine uses a short fixed state alphabet because `res/utm.json`
+accepts only its canonical encoding.
+
+Canonical state block:
+
+```text
+LRTWXABCDE
+```
+
+Initial state:
+
+```text
+L
+```
+
+Final state:
+
+```text
+E
+```
 
 The states are:
 
-- `A`: scan right until `=`
-- `B`: look one cell left of `=`
-  - if it is `1`, move `=` one position left by rewriting that `1` as `=`
-  - if it is `+`, the right operand is empty, so erase `+` and halt
-- `C`: move left until `+`, then rewrite `+` as `1`
-- `D`: move right until `=`, then erase `=`
-- `E`: halt
+- `L` — validate the left operand by scanning `1*` until `+`
+- `R` — validate the right operand by scanning `1*` until `=`
+- `T` — validate that `=` is the end marker
+- `W` — rewind back to the left edge of the validated input
+- `X` — invalid input / blocked
+- `A` — scan right to `=`
+- `B` — inspect the cell immediately left of `=`
+- `C` — walk left to `+`
+- `D` — walk right to `=`
+- `E` — final
+
+A valid run has two visible phases:
+
+1. `L -> R -> T -> W` validates `1*+1*=` and rewinds
+2. `A -> B -> C -> D -> E` performs the addition
+
+This machine does not need an extra marker symbol. It only has to remove the
+separators while preserving the number of `1`s.
 
 A full run for `11+1111=` is:
 
@@ -313,68 +350,69 @@ The total number of `1`s is preserved, so the final block of `1`s has length `a 
 
 ### `res/utm.json`
 
-Goal: simulate the unary-add machine from `res/unary_add.json` using only another Turing machine.
+Goal: accept one exact encoded unary-add machine and then run unary addition directly on the payload.
 
-This file looks very different from the others because a Turing machine cannot read JSON objects directly.
-It only sees a tape of symbols. So the simulated machine is encoded as a flat string on the tape.
+This file accepts the canonical encoding of `res/unary_add.json` and rejects every
+other machine prefix, even if another prefix would describe an equivalent unary-add machine.
 
-The encoded input format is:
-
-```text
-alphabet|blank|states|initial|finals|transitions|_data
-```
-
-For the bundled unary-add machine, the sample input from `test/run_all.sh` is:
+The canonical encoded machine prefix is:
 
 ```text
-1.+=|.|ABCDE|A|E|A.A.RA1A1RA+A+RA=B.LB1C=LB+E.LC1C1LC+D1RD1D1RD=E.R|_11+1111=
+1.+=|.|LRTWXABCDE|L|E|L1L1RL+R+RL=X=RL.X.RR1R1RR+X+RR=T=RR.X.RT1X1RT+X+RT=X=RT.W.LW1W1LW+W+LW=W=LW.A.RA.A.RA1A1RA+A+RA=B.LB1C=LB+E.LC1C1LC+D1RD1D1RD=E.R|_
 ```
 
-Read it as:
+Section by section, that is:
 
-- `1.+=` — simulated alphabet
-- `.` — simulated blank
-- `ABCDE` — simulated states, encoded as single characters
-- `A` — simulated initial state
-- `E` — simulated final state
-- `A.A.RA1A1RA+A+RA=B.L...` — simulated transitions
-- `_11+1111=` — simulated tape, where `_` marks the simulated head position
-
-One encoded transition always uses 5 characters:
+- alphabet: `1.+=`
+- blank: `.`
+- states: `LRTWXABCDE`
+- initial: `L`
+- finals: `E`
+- transitions:
 
 ```text
-<from><read><to><write><move>
+L1L1RL+R+RL=X=RL.X.RR1R1RR+X+RR=T=RR.X.RT1X1RT+X+RT=X=RT.W.LW1W1LW+W+LW=W=LW.A.RA.A.RA1A1RA+A+RA=B.LB1C=LB+E.LC1C1LC+D1RD1D1RD=E.R
 ```
 
-Examples:
+- encoded head marker and start of data: `|_`
 
-- `A1A1R` means: in state `A`, reading `1`, stay in `A`, write `1`, move right
-- `B1C=L` means: in state `B`, reading `1`, go to `C`, write `=`, move left
+A full runtime input therefore looks like:
 
-High-level loop of the universal machine:
+```text
+1.+=|.|LRTWXABCDE|L|E|L1L1RL+R+RL=X=RL.X.RR1R1RR+X+RR=T=RR.X.RT1X1RT+X+RT=X=RT.W.LW1W1LW+W+LW=W=LW.A.RA.A.RA1A1RA+A+RA=B.LB1C=LB+E.LC1C1LC+D1RD1D1RD=E.R|_11+1111=
+```
 
-1. find `_` to know where the simulated head is
-2. recover the simulated current symbol
-3. recover the simulated current state
-4. scan the encoded transition list for the block matching `(state, symbol)`
-5. copy the encoded `to`, `write`, and `move` fields into working positions
-6. update the simulated tape after the last `|`
-7. move `_` left or right
-8. update the stored simulated state and repeat
-9. stop when the stored simulated state is final
+The state families are:
 
-Why `utm.json` is so large:
+- `ck_ab*` — check the fixed alphabet field `1.+=`
+- `ck_bl*` — check the `|.|` blank-field segment
+- `ck_st*` — check the fixed states field `LRTWXABCDE`
+- `ck_in*` — check the fixed initial field `|L|`
+- `ck_fn*` — check the fixed finals field `E|`
+- `ck_tr*` — check the exact 130-character transition block
+- `ck_hd1` — check the final `|` before the encoded head marker
+- `ld_mark` — rewrite `_` to `.` so the direct runner gets a left work blank
+- `uL`, `uR`, `uT`, `uW`, `uA`, `uB`, `uC`, `uD`, `uE` — run unary-add directly
+- `uX` — malformed unary-add payload / blocked
+- `bad` — malformed encoded machine prefix / blocked
 
-- every tiny subtask above must be expressed as ordinary TM transitions
-- a plain TM has no variables, no stack, and no parser helpers
-- each branch such as `read symbol is +` or `current state is C` becomes its own cluster of states
+Loader and direct-runner flow:
 
-That is why the state names are long and mechanical. They encode the job being done, for example:
+1. `ck_*` states compare the entire machine prefix one character at a time.
+2. Any mismatch jumps to `bad`.
+3. `ld_mark` consumes `_`, rewrites it to `.`, and moves onto the first payload symbol.
+4. `uL -> uR -> uT` validate the payload as unary-add input.
+   - `uT` accepts only the real end-of-input blank `~`, not a literal `.` typed in the payload.
+   - when `uT` sees `~`, it rewrites that cell to `.` so the direct runner has a right work blank.
+5. `uW` rewinds to the left work blank created from `_`.
+6. `uA -> uB -> uC -> uD -> uE` execute unary addition directly on the suffix.
 
-- `40_st_1_A_...` means "searching a transition for simulated state `A` while the simulated read symbol is `1`"
-- `42_extract_R_...` means "apply the transition and perform a simulated right move"
+Important consequences:
 
-This is not a fully generic JSON interpreter. It is a deliberate, subject-focused universal machine for the encoded unary-add machine family above. That tradeoff keeps the construction understandable and still satisfies the requirement: one machine in `res/` can run the unary-add machine from the same folder.
+- `res/utm.json` is a machine specialized to one canonical encoded unary-add machine, not a general interpreter for arbitrary encoded transition tables.
+- A malformed encoded prefix such as the wrong initial field, wrong states block, or one wrong transition character blocks in `bad`.
+- A valid canonical prefix followed by a malformed unary-add payload blocks in `uX`.
+- A valid canonical prefix followed by a valid unary-add payload produces the same unary-add result as running `res/unary_add.json` directly, while leaving the checked prefix in place on the left.
 
 ## Implementation notes
 
