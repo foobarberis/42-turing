@@ -30,7 +30,7 @@ run_case() {
 	count=$((count + 1))
 	rm -f "$log_file"
 
-	cmd=(./ft_turing "$json" "$input" -l "$log_file")
+	cmd=(./ft_turing -l "$log_file" "$json" -- "$input")
 	printf '%q ' "${cmd[@]}" >> "$LOG"
 	printf '\n' >> "$LOG"
 	if "${cmd[@]}" >> "$LOG" 2>&1; then
@@ -161,8 +161,36 @@ run_case 'unary_add accepts += as empty operands' 'res/unary_add.json' '+=' 'log
 assert_trace_case '(B, +) -> (E, ., LEFT)' '[<.>'
 pass_case
 
+run_case 'unary_add accepts 1+= as empty right operand' 'res/unary_add.json' '1+=' 'log/unary_add_info.log'
+assert_trace_case '(B, +) -> (E, ., LEFT)' '.<1>'
+pass_case
+
+run_case 'unary_add accepts +11= as empty left operand' 'res/unary_add.json' '+11=' 'log/unary_add_info.log'
+assert_trace_case '-> (E, ., RIGHT)' '11.<.>'
+pass_case
+
 run_case 'unary_add computes 11+1111= to 111111' 'res/unary_add.json' '11+1111=' 'log/unary_add_info.log'
 assert_trace_case '-> (E, ., RIGHT)' '111111.<.>'
+pass_case
+
+run_case 'unary_add rejects 111 as malformed external input' 'res/unary_add.json' '111' 'log/unary_add_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
+run_case 'unary_add rejects 1+11+111= as malformed external input' 'res/unary_add.json' '1+11+111=' 'log/unary_add_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
+run_case 'unary_add rejects 1=+1 as malformed external input' 'res/unary_add.json' '1=+1' 'log/unary_add_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
+run_case 'unary_add rejects =+ as malformed external input' 'res/unary_add.json' '=+' 'log/unary_add_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
+pass_case
+
+run_case 'unary_add rejects 11+=1 as malformed external input' 'res/unary_add.json' '11+=1' 'log/unary_add_info.log'
+assert_blocked_case 'Blocked at this state INVALID_INPUT'
 pass_case
 
 run_case 'utm runs encoded unary_add and yields 111111' 'res/utm.json' '1.+=|.|ABCDE|A|E|A.A.RA1A1RA+A+RA=B.LB1C=LB+E.LC1C1LC+D1RD1D1RD=E.R|_11+1111=' 'log/utm_info.log'
