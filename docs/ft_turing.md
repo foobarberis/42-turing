@@ -141,3 +141,119 @@ Write 5 machine descriptions for the program:
 3. A machine able to decide whether the input is a word of the language `0^n1^n`, for example `000111` or `0000011111`. Before halting, write the result on the tape as `n` or `y` to the right of the rightmost character on the tape.
 4. A machine able to decide whether the input is a word of the language `0^(2n)`, for example `00` or `0000`, but not `000` or `00000`. Before halting, write the result on the tape as `n` or `y` to the right of the rightmost character on the tape.
 5. A machine able to run the first machine in this list, the one computing unary addition. The machine alphabet, states, transitions, and input **are** the input of the machine you are writing, encoded as you see fit.
+
+# Evaluation
+
+## Scale for Project FT_TURING
+
+### Introduction
+
+For the good of this evaluation, we ask you to:
+
+- Stay mannerly, polite, respectful, and constructive during this evaluation. The trust between you and the 42 community depends on it.
+- Bring out to the graded student (or team) any mistake they might have made.
+- Accept that there might be differences of interpretation of the subject or the rules between you and the graded student (or team). Stay open-minded and grade as honestly as possible.
+
+### Guidelines
+
+- You must grade only what is present in the graded student's (or team's) repository.
+
+### Attachments
+
+- [Subject](https://cdn.intra.42.fr/pdf/pdf/3708/ft_turing.en.pdf)
+
+## Preliminaries
+
+This section is dedicated to setting up the evaluation and testing the prerequisites. It does not reward points, but if something is wrong at this step or at any point of the evaluation, the grade is 0, and an appropriate flag might be checked if needed.
+
+### Respect of the rules
+
+- The graded student (or team) work is present on their repository.
+- The graded student (or team) is able to explain their work at any time of the evaluation.
+- The generic rules of the subject are respected at any time of the evaluation.
+- According to the subject, the program can be built with `ocamlc` or `ocamlopt` by using a `Makefile`. This `Makefile` also installs anything necessary by using OPAM.
+
+- [ ] Yes
+- [ ] No
+
+## Mandatory part - The program
+
+The first section of the mandatory part is to write a program in OCaml (or Haskell) able to simulate a Turing machine according to a machine description.
+
+### Usage
+
+Launch the program without parameters to display its usage. Is the usage what is expected according to the subject?
+
+- [ ] Yes
+- [ ] No
+
+### JSON description
+
+Machine descriptions are fed to the program as JSON descriptions. Is the program able to:
+
+- Read this description?
+- Assert that this description is valid syntactically and semantically according to the subject?
+- Reject empty and ill-formatted descriptions, nonexistent description files, etc.?
+
+- [ ] Yes
+- [ ] No
+
+### Execution
+
+Test if the program is able to execute the machine given in the JSON description on the input given as a parameter to the program. You must ensure that:
+
+- The machine computes the expected result, including if that result is the machine being blocked. In that case, correct error handling is expected.
+- The program displays at least the state of the tape for each transition. If the tape states are logged into a file to free display room on standard output and allow a dynamic observation of the tape by using the `\r` character, give the points.
+
+- [ ] Yes
+- [ ] No
+
+## Mandatory part - The 5 machine descriptions
+
+The second section of the mandatory part is to write 5 machine descriptions that the program can simulate.
+
+### Unary addition
+
+A machine able to compute a unary addition.
+
+Test the machine with different valid and invalid inputs. Does the machine compute the correct result or report an error consistently?
+
+- [ ] Yes
+- [ ] No
+
+### Palindrome
+
+A machine able to detect a palindrome.
+
+Does the machine write an `n` or a `y` on the tape before halting, and is this result always consistent with the input?
+
+- [ ] Yes
+- [ ] No
+
+### `0^n1^n`
+
+A machine able to decide if the input is a word of the language `0^n1^n`, for instance the words `000111` or `0000011111`.
+
+Does the machine write an `n` or a `y` on the tape before halting, and is this result always consistent with the input?
+
+- [ ] Yes
+- [ ] No
+
+### `0^2n`
+
+A machine able to decide if the input is a word of the language `0^2n`, for instance the words `00` or `0000`, but not the words `000` or `00000`.
+
+Does the machine write an `n` or a `y` on the tape before halting, and is this result always consistent with the input?
+
+- [ ] Yes
+- [ ] No
+
+### Simulation of simulation
+
+A machine able to simulate the first machine, `unary_addition`. The simulated machine's alphabet, states, transitions, and input are the input of the simulating machine, encoded as the group has seen fit.
+
+Is the simulated machine's result always consistent with its input?
+
+- [ ] Yes
+- [ ] No
+

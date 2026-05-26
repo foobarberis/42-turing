@@ -12,8 +12,15 @@ UNIT_OBJ = $(BUILDDIR)/test_parse.cmo \
 		   $(BUILDDIR)/test_trace.cmo
 
 MODULES = types format trace parse validate execute ft_turing
+SRC_ML = $(addprefix $(SRCDIR)/,$(addsuffix .ml,$(MODULES)))
+TEST_ML = test/test_parse.ml \
+		  test/test_validate.ml \
+		  test/test_execute.ml \
+		  test/test_format.ml \
+		  test/test_trace.ml
 NATIVE_OBJ = $(addprefix $(BUILDDIR)/,$(addsuffix .cmx,$(MODULES)))
 BYTE_OBJ = $(addprefix $(BUILDDIR)/,$(addsuffix .cmo,$(MODULES)))
+DEPFILE = $(BUILDDIR)/depend.mk
 
 SWITCH = .
 OCAML_VERSION = 5.2.1
@@ -23,6 +30,15 @@ OPAM_PACKAGES = yojson
 RUN = opam exec --switch=$(SWITCH) --
 PKG = -package $(FIND_PACKAGES)
 OCAMLFLAGS = -g -I $(BUILDDIR)
+DEPFLAGS = -I $(SRCDIR)
+
+ifneq ($(filter clean fclean distclean setup,$(MAKECMDGOALS)),)
+SKIP_DEPS = 1
+endif
+
+ifneq ($(SKIP_DEPS),1)
+-include $(DEPFILE)
+endif
 
 all: $(NAME)
 
@@ -36,6 +52,14 @@ setup:
 
 $(BUILDDIR):
 	@mkdir -p $(BUILDDIR)
+
+$(DEPFILE): $(SRC_ML) $(TEST_ML) Makefile | $(BUILDDIR) setup
+	$(RUN) ocamlfind ocamldep $(PKG) $(DEPFLAGS) $(SRC_ML) $(TEST_ML) | \
+		sed \
+			-e 's#^\(src\|test\)/\([^ ]*\)\.cmo:#$(BUILDDIR)/\2.cmo:#' \
+			-e 's#^\(src\|test\)/\([^ ]*\)\.cmx:#$(BUILDDIR)/\2.cmx:#' \
+			-e 's#\(src\|test\)/\([^ ]*\)\.cmo#$(BUILDDIR)/\2.cmo#g' \
+			-e 's#\(src\|test\)/\([^ ]*\)\.cmx#$(BUILDDIR)/\2.cmx#g' > $@
 
 $(BUILDDIR)/%.cmx: $(SRCDIR)/%.ml Makefile | $(BUILDDIR) setup
 	$(RUN) ocamlfind ocamlopt $(OCAMLFLAGS) $(PKG) -c $< -o $@

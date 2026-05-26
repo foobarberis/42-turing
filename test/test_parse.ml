@@ -151,15 +151,38 @@ let () =
 
   run "load_machine parses unary_add" (fun () ->
     let machine = load_machine "res/unary_add.json" in
+    let validation_state = transitions_for "L" machine in
     let state_a = transitions_for "A" machine in
     expect_equal "unary_add" machine.name "unexpected machine name";
     expect_equal ['1'; '.'; '+'; '='] machine.alphabet "unexpected alphabet";
     expect_equal '.' machine.blank "unexpected blank symbol";
-    expect_equal ["A"; "B"; "C"; "D"; "E"]
+    expect_equal
+      [
+        "L";
+        "R";
+        "T";
+        "W";
+        "X";
+        "A";
+        "B";
+        "C";
+        "D";
+        "E";
+      ]
       machine.states
       "unexpected states";
-    expect_equal "A" machine.initial "unexpected initial state";
+    expect_equal "L" machine.initial "unexpected initial state";
     expect_equal ["E"] machine.finals "unexpected final states";
+    expect_equal 4 (List.length validation_state) "unexpected validation transition count";
+    expect_equal
+      {
+        read = '+';
+        to_state = "R";
+        write = '+';
+        action = Right;
+      }
+      (List.nth validation_state 1)
+      "unexpected validation transition";
     expect_equal 4 (List.length state_a) "unexpected A transition count";
     expect_equal
       {
