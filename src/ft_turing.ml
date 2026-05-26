@@ -1,14 +1,15 @@
 open Types
 
 let usage =
-  "usage: ft_turing [-h] [-l logfile] jsonfile input\n\n"
+  "usage: ft_turing [-h] [-l logfile] [--] jsonfile input\n\n"
   ^ "positional arguments:\n"
   ^ "  jsonfile    json description of the machine\n"
   ^ "  input       input of the machine\n\n"
   ^ "optional arguments:\n"
   ^ "  -h, --help  show this help message and exit\n"
   ^ "  -l logfile, --log logfile\n"
-  ^ "              write trace to logfile instead of stdout"
+  ^ "              write trace to logfile instead of stdout\n"
+  ^ "  --          end option parsing"
 
 let print_usage channel = output_string channel (usage ^ "\n")
 
@@ -45,26 +46,28 @@ type cli =
   | Error
 
 let parse_args args =
-  let rec loop sink positional = function
-    | [] ->
-        begin
-          match List.rev positional with
-          | [jsonfile; input] -> Run (sink, jsonfile, input)
-          | _ -> Error
-        end
+  let finalize sink positional =
+    match List.rev positional with
+    | [jsonfile; input] -> Run (sink, jsonfile, input)
+    | _ -> Error
+  in
+  let rec loop sink positional allow_options = function
+    | [] -> finalize sink positional
+    | arg :: rest when not allow_options -> loop sink (arg :: positional) false rest
+    | "--" :: rest -> loop sink positional false rest
     | ["-h"] | ["--help"] when sink = Stdout && positional = [] -> Help
     | ("-l" | "--log") :: [] -> Error
     | ("-l" | "--log") :: path :: rest ->
         begin
           match sink with
-          | Stdout -> loop (File path) positional rest
+          | Stdout -> loop (File path) positional true rest
           | File _ -> Error
         end
     | ("-h" | "--help") :: _ -> Error
     | arg :: _ when String.length arg > 0 && arg.[0] = '-' -> Error
-    | arg :: rest -> loop sink (arg :: positional) rest
+    | arg :: rest -> loop sink (arg :: positional) true rest
   in
-  loop Stdout [] args
+  loop Stdout [] true args
 
 let main () =
   match Array.to_list Sys.argv with

@@ -98,7 +98,7 @@ let string_of_step (res : step_res) (m : machine) (style : style) : string =
   | Continue (state, tape, transition) ->
       string_of_tape tape m style ^ " " ^ string_of_transition state transition
   | Halted tape -> string_of_tape tape m style
-  | Blocked (state, tape) -> string_of_tape tape m style ^ "Blocked at this state " ^ state
+  | Blocked (state, tape) -> string_of_tape tape m style ^ " Blocked at this state " ^ state
 
 (* Convert an input string to a tape. *)
 let tape_of_string ?(blank = ' ') (str : string) : tape =

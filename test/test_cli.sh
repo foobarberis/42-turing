@@ -15,7 +15,7 @@ ansi_prefix=$(printf '\033[')
 
 write_usage() {
 	printf '%s\n' \
-		'usage: ft_turing [-h] [-l logfile] jsonfile input' \
+		'usage: ft_turing [-h] [-l logfile] [--] jsonfile input' \
 		'' \
 		'positional arguments:' \
 		'  jsonfile    json description of the machine' \
@@ -24,7 +24,8 @@ write_usage() {
 		'optional arguments:' \
 		'  -h, --help  show this help message and exit' \
 		'  -l logfile, --log logfile' \
-		'              write trace to logfile instead of stdout'
+		'              write trace to logfile instead of stdout' \
+		'  --          end option parsing'
 }
 
 usage_file="$tmpdir/usage.txt"
@@ -90,7 +91,15 @@ pass_case() {
 
 printf 'cli\n'
 
+dash_machine='test/fixtures/cli/dash_machine.json'
+
 run_case '--help prints usage to stdout' ./ft_turing --help
+assert_status 0
+assert_same "$usage_file" "$stdout_file"
+assert_empty "$stderr_file"
+pass_case
+
+run_case '-h prints usage to stdout' ./ft_turing -h
 assert_status 0
 assert_same "$usage_file" "$stdout_file"
 assert_empty "$stderr_file"
@@ -139,6 +148,30 @@ run_case 'unknown flag prints usage to stderr' ./ft_turing --logged res/unary_ad
 assert_status 1
 assert_empty "$stdout_file"
 assert_same "$usage_file" "$stderr_file"
+pass_case
+
+run_case 'dash input without -- prints usage to stderr' ./ft_turing "$dash_machine" -
+assert_status 1
+assert_empty "$stdout_file"
+assert_same "$usage_file" "$stderr_file"
+pass_case
+
+run_case 'dash input after -- prints the trace to stdout' ./ft_turing "$dash_machine" -- -
+assert_status 0
+assert_non_empty "$stdout_file"
+assert_empty "$stderr_file"
+assert_contains '(q0, -) -> (HALT, -, RIGHT)' "$stdout_file"
+assert_not_contains "$ansi_prefix" "$stdout_file"
+pass_case
+
+log_file="$tmpdir/dash_machine.log"
+run_case 'dash input after -- works with --log' ./ft_turing --log "$log_file" "$dash_machine" -- -
+assert_status 0
+assert_empty "$stdout_file"
+assert_empty "$stderr_file"
+assert_non_empty "$log_file"
+assert_contains '(q0, -) -> (HALT, -, RIGHT)' "$log_file"
+assert_not_contains "$ansi_prefix" "$log_file"
 pass_case
 
 run_case 'missing json path returns parse error' ./ft_turing test/fixtures/parse/missing.json 101
