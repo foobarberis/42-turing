@@ -8,7 +8,7 @@ let string_of_char_list (lst : char list) : string =
   String.concat "" (List.map (String.make 1) lst)
 
 (* Build the machine header banner. *)
-let string_of_header (m_name : string) : string =
+(* let string_of_header (m_name : string) : string =
   String.make 80 '*'
   ^ "\n"
   ^ "*"
@@ -17,12 +17,34 @@ let string_of_header (m_name : string) : string =
   ^ "*"
   ^ String.make (39 - String.length m_name / 2) ' '
   ^ m_name
-  ^ String.make (39 - String.length m_name / 2 - 1) ' '
+  ^ String.make (39 - String.length m_name / 2) ' '
   ^ "*\n"
   ^ "*"
   ^ String.make 78 ' '
   ^ "*\n"
-  ^ String.make 80 '*'
+  ^ String.make 80 '*' *)
+
+let string_of_header (m_name : string) : string =
+  let width = 80 in
+  let inner = width - 2 in (* 78 *)
+  let name_len = String.length m_name in
+  (* Tronquer le nom s'il est trop long *)
+  let name =
+    if name_len > inner then
+      String.sub m_name 0 (inner - 3) ^ "..."
+    else
+      m_name
+  in
+  let name_len = String.length name in
+  let total_padding = inner - name_len in
+  let left_pad  = total_padding / 2 in
+  let right_pad = total_padding - left_pad in  (* absorbe le cas impair *)
+  String.make width '*'
+  ^ "\n"
+  ^ "*" ^ String.make inner ' ' ^ "*\n"
+  ^ "*" ^ String.make left_pad ' ' ^ name ^ String.make right_pad ' ' ^ "*\n"
+  ^ "*" ^ String.make inner ' ' ^ "*\n"
+  ^ String.make width '*'
 
 (* Render the machine metadata. *)
 let string_of_machine_header (m : machine) : string =
