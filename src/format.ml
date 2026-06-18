@@ -8,27 +8,11 @@ let string_of_char_list (lst : char list) : string =
   String.concat "" (List.map (String.make 1) lst)
 
 (* Build the machine header banner. *)
-(* let string_of_header (m_name : string) : string =
-  String.make 80 '*'
-  ^ "\n"
-  ^ "*"
-  ^ String.make 78 ' '
-  ^ "*\n"
-  ^ "*"
-  ^ String.make (39 - String.length m_name / 2) ' '
-  ^ m_name
-  ^ String.make (39 - String.length m_name / 2) ' '
-  ^ "*\n"
-  ^ "*"
-  ^ String.make 78 ' '
-  ^ "*\n"
-  ^ String.make 80 '*' *)
-
 let string_of_header (m_name : string) : string =
   let width = 80 in
-  let inner = width - 2 in (* 78 *)
+  let inner = width - 2 in
   let name_len = String.length m_name in
-  (* Tronquer le nom s'il est trop long *)
+  (* Truncate the name if it is too long. *)
   let name =
     if name_len > inner then
       String.sub m_name 0 (inner - 3) ^ "..."
@@ -37,8 +21,9 @@ let string_of_header (m_name : string) : string =
   in
   let name_len = String.length name in
   let total_padding = inner - name_len in
-  let left_pad  = total_padding / 2 in
-  let right_pad = total_padding - left_pad in  (* absorbe le cas impair *)
+  let left_pad = total_padding / 2 in
+  (* Right padding gets the extra space if needed. *)
+  let right_pad = total_padding - left_pad in
   String.make width '*'
   ^ "\n"
   ^ "*" ^ String.make inner ' ' ^ "*\n"
