@@ -84,6 +84,17 @@ let split_lines str =
 let all_chars_are ch str =
   String.for_all (fun c -> c = ch) str
 
+let title_line name =
+  List.nth (split_lines (string_of_header name)) 2
+
+let expect_title_line expected_name name =
+  let line = title_line name in
+  expect_equal 80 (String.length line) "expected title line width 80";
+  expect_equal ('*') line.[0] "expected title line opening border";
+  expect_equal ('*') line.[79] "expected title line closing border";
+  expect (String.contains line expected_name.[0]) "expected title line to contain name";
+  line
+
 let () =
   Printf.printf "\nformat.ml\n%!";
 
@@ -98,6 +109,20 @@ let () =
     expect (all_chars_are ' ' (String.sub (List.nth lines 1) 1 78)) "expected empty spacer line";
     expect (String.length (List.nth lines 2) = 80) "expected title line width 80";
     expect (String.contains (List.nth lines 2) 'f') "expected machine name in title line");
+
+  run "string_of_header keeps a 78-character name untruncated" (fun () ->
+    let name = String.make 78 'a' in
+    expect_equal ("*" ^ name ^ "*") (expect_title_line name name) "unexpected 78-character title line");
+
+  run "string_of_header truncates a 79-character name" (fun () ->
+    let name = String.make 79 'b' in
+    let expected = String.make 75 'b' ^ "..." in
+    expect_equal ("*" ^ expected ^ "*") (expect_title_line expected name) "unexpected 79-character title line");
+
+  run "string_of_header truncates a much longer name" (fun () ->
+    let name = String.make 200 'c' in
+    let expected = String.make 75 'c' ^ "..." in
+    expect_equal ("*" ^ expected ^ "*") (expect_title_line expected name) "unexpected long title line");
 
   run "string_of_transition renders LEFT" (fun () ->
     expect_equal
