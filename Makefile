@@ -27,7 +27,9 @@ OCAML_VERSION = 5.2.1
 FIND_PACKAGES = yojson,unix
 OPAM_PACKAGES = yojson
 
-RUN = opam exec --switch=$(SWITCH) --
+OPAMROOT = $(CURDIR)/.opam
+OPAM = OPAMROOT="$(OPAMROOT)" opam
+RUN = $(OPAM) exec --switch=$(SWITCH) --
 PKG = -package $(FIND_PACKAGES)
 OCAMLFLAGS = -g -I $(BUILDDIR)
 DEPFLAGS = -I $(SRCDIR)
@@ -46,9 +48,9 @@ byte: $(BYTE)
 
 setup:
 	@command -v opam >/dev/null 2>&1 || { echo "Error: opam is required"; exit 1; }
-	@opam init --disable-sandboxing --bare -y >/dev/null 2>&1 || true
-	@if [ ! -d _opam ]; then opam switch create $(SWITCH) ocaml-base-compiler.$(OCAML_VERSION) -y; fi
-	@opam install --switch=$(SWITCH) -y ocamlfind $(OPAM_PACKAGES)
+	@[ -f "$(OPAMROOT)/config" ] || $(OPAM) init --disable-sandboxing --bare -y
+	@if [ ! -d _opam ]; then $(OPAM) switch create $(SWITCH) ocaml-base-compiler.$(OCAML_VERSION) -y; fi
+	@$(OPAM) install --switch=$(SWITCH) -y ocamlfind $(OPAM_PACKAGES)
 
 $(BUILDDIR):
 	@mkdir -p $(BUILDDIR)
@@ -112,6 +114,6 @@ fclean: clean
 re: fclean all
 
 distclean: fclean
-	@rm -rf _opam
+	@rm -rf _opam .opam
 
 .PHONY: all byte setup unit ut e2e test clean fclean re distclean
